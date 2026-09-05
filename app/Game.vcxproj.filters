@@ -11,9 +11,6 @@
     <ClCompile Include="src\scene\factory\SceneFactory.cpp">
       <Filter>src\scene\factory</Filter>
     </ClCompile>
-    <ClCompile Include="src\scene\title\animation\OpeningAnimation.cpp">
-      <Filter>src\scene\title\animation</Filter>
-    </ClCompile>
     <ClCompile Include="src\scene\title\TitleScene.cpp">
       <Filter>src\scene\title</Filter>
     </ClCompile>
@@ -35,6 +32,7 @@
     <ClCompile Include="src\object\repeater\Repeater.cpp" />
     <ClCompile Include="src\object\alumiWall\AlumiWall.cpp" />
     <ClCompile Include="src\object\pc\PC.cpp" />
+    <ClCompile Include="src\scene\title\animation\PlayerPopupAnimation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -99,9 +97,6 @@
     <ClInclude Include="src\scene\factory\SceneFactory.h">
       <Filter>src\scene\factory</Filter>
     </ClInclude>
-    <ClInclude Include="src\scene\title\animation\OpeningAnimation.h">
-      <Filter>src\scene\title\animation</Filter>
-    </ClInclude>
     <ClInclude Include="src\scene\title\TitleScene.h">
       <Filter>src\scene\title</Filter>
     </ClInclude>
@@ -125,5 +120,6 @@
     <ClInclude Include="src\object\alumiWall\AlumiWall.h" />
     <ClInclude Include="src\object\pc\PC.h" />
     <ClInclude Include="src\object\ObjectRule.h" />
+    <ClInclude Include="src\scene\title\animation\PlayerPopupAnimation.h" />
   </ItemGroup>
 </Project>
