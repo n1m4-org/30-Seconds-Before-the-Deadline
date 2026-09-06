@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="src\object\baseObject2d\BaseObject2d.cpp">
+      <Filter>src\object\baseObject2d</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\player\Player.cpp">
+      <Filter>src\object\player</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\router\Router.cpp">
+      <Filter>src\object\router</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\repeater\Repeater.cpp">
+      <Filter>src\object\repeater</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\alumiWall\AlumiWall.cpp">
+      <Filter>src\object\alumiWall</Filter>
+    </ClCompile>
+    <ClCompile Include="src\object\pc\PC.cpp">
+      <Filter>src\object\pc</Filter>
+    </ClCompile>
+    <ClCompile Include="src\logic\mapCollision\MapCollision.cpp">
+      <Filter>src\logic\mapCollision</Filter>
+    </ClCompile>
+    <ClCompile Include="src\logic\signal\SignalSystem.cpp">
+      <Filter>src\logic\signal</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scene\game\GameScene.cpp">
+      <Filter>src\scene\game</Filter>
+    </ClCompile>
     <ClCompile Include="src\framework\ThirtySecBeforeDeadline.cpp">
       <Filter>src\framework</Filter>
     </ClCompile>
@@ -26,15 +53,6 @@
     <ClCompile Include="src\wrapper\InputAwareSprite.cpp">
       <Filter>src\wrapper</Filter>
     </ClCompile>
-    <ClCompile Include="src\scene\game\GameScene.cpp" />
-    <ClCompile Include="src\logic\mapCollision\MapCollision.cpp" />
-    <ClCompile Include="src\logic\signal\SignalSystem.cpp" />
-    <ClCompile Include="src\object\baseObject2d\BaseObject2d.cpp" />
-    <ClCompile Include="src\object\player\Player.cpp" />
-    <ClCompile Include="src\object\router\Router.cpp" />
-    <ClCompile Include="src\object\repeater\Repeater.cpp" />
-    <ClCompile Include="src\object\alumiWall\AlumiWall.cpp" />
-    <ClCompile Include="src\object\pc\PC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -49,6 +67,9 @@
     <Filter Include="src\logic">
       <UniqueIdentifier>{0d8d52d1-8eea-49e9-b7fa-bc132432d1dd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\object">
+      <UniqueIdentifier>{49373fd5-e4d4-4334-b5ab-753b3bd7b6d0}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\presentation">
       <UniqueIdentifier>{1cad9e48-0e3c-4051-90d1-0cc73d42a5af}</UniqueIdentifier>
     </Filter>
@@ -61,14 +82,44 @@
     <Filter Include="src\wrapper">
       <UniqueIdentifier>{e31bceb2-91a4-422e-b4f8-49874f399883}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\logic\ConvertNumTex">
+      <UniqueIdentifier>{111d1ddc-f743-411e-8fe2-1dc88af41d6a}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\logic\input">
       <UniqueIdentifier>{70818c74-cc1f-44b3-ad8d-8ccffdd24319}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\logic\mapCollision">
+      <UniqueIdentifier>{ff9df0b2-a7ab-450e-af86-1cef1618ec60}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\logic\signal">
+      <UniqueIdentifier>{a2c82241-29cf-4714-86d2-3965d40e3874}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\object\alumiWall">
+      <UniqueIdentifier>{7b00760d-ef8c-49e7-9612-dbbf9183871f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\object\baseObject2d">
+      <UniqueIdentifier>{b69dd9c9-7d50-45bb-b380-4542cd7da7e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\object\pc">
+      <UniqueIdentifier>{71091907-c1d5-4ac3-a5a4-1f05eb741212}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\object\player">
+      <UniqueIdentifier>{5d61b781-57ac-4624-92bc-dccc1965656f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\object\repeater">
+      <UniqueIdentifier>{8f38376e-a610-47f0-84f4-b58f3a5ade22}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\object\router">
+      <UniqueIdentifier>{e3db8960-6202-4bbd-b2d2-313ce6916fbb}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\presentation\animation">
       <UniqueIdentifier>{dd53084d-6473-42c0-9593-a6c70340de08}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\scene\factory">
       <UniqueIdentifier>{a8a82c41-fac2-41df-89e9-27e327588d94}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\scene\game">
+      <UniqueIdentifier>{afe64f23-7a08-4485-8159-a123057ccc63}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\scene\title">
       <UniqueIdentifier>{b05ac6a7-91b6-4b92-9a9c-668b21ab971f}</UniqueIdentifier>
@@ -84,6 +135,39 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\object\baseObject2d\BaseObject2d.h">
+      <Filter>src\object\baseObject2d</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\player\Player.h">
+      <Filter>src\object\player</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\router\Router.h">
+      <Filter>src\object\router</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\repeater\Repeater.h">
+      <Filter>src\object\repeater</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\alumiWall\AlumiWall.h">
+      <Filter>src\object\alumiWall</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\pc\PC.h">
+      <Filter>src\object\pc</Filter>
+    </ClInclude>
+    <ClInclude Include="src\logic\mapCollision\MapCollision.h">
+      <Filter>src\logic\mapCollision</Filter>
+    </ClInclude>
+    <ClInclude Include="src\logic\signal\SignalSystem.h">
+      <Filter>src\logic\signal</Filter>
+    </ClInclude>
+    <ClInclude Include="src\logic\ConvertNumTex\ConvertNumTex.h">
+      <Filter>src\logic\ConvertNumTex</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\ObjectRule.h">
+      <Filter>src\object</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\game\GameScene.h">
+      <Filter>src\scene\game</Filter>
+    </ClInclude>
     <ClInclude Include="src\config\ResourcePath.h">
       <Filter>src\config</Filter>
     </ClInclude>
@@ -114,16 +198,5 @@
     <ClInclude Include="src\wrapper\InputAwareSprite.h">
       <Filter>src\wrapper</Filter>
     </ClInclude>
-    <ClInclude Include="src\scene\game\GameScene.h" />
-    <ClInclude Include="src\logic\ConvertNumTex\ConvertNumTex.h" />
-    <ClInclude Include="src\logic\mapCollision\MapCollision.h" />
-    <ClInclude Include="src\logic\signal\SignalSystem.h" />
-    <ClInclude Include="src\object\baseObject2d\BaseObject2d.h" />
-    <ClInclude Include="src\object\player\Player.h" />
-    <ClInclude Include="src\object\router\Router.h" />
-    <ClInclude Include="src\object\repeater\Repeater.h" />
-    <ClInclude Include="src\object\alumiWall\AlumiWall.h" />
-    <ClInclude Include="src\object\pc\PC.h" />
-    <ClInclude Include="src\object\ObjectRule.h" />
   </ItemGroup>
 </Project>
