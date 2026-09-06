@@ -50,6 +50,12 @@
     <ClCompile Include="src\screen\loading\LoadingScreen.cpp">
       <Filter>src\screen\loading</Filter>
     </ClCompile>
+    <ClCompile Include="src\presentation\ui\PauseMenu.cpp">
+      <Filter>src\presentation\ui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stage\StageManager.cpp">
+      <Filter>src\stage</Filter>
+    </ClCompile>
     <ClCompile Include="src\wrapper\InputAwareSprite.cpp">
       <Filter>src\wrapper</Filter>
     </ClCompile>
@@ -78,6 +84,9 @@
     </Filter>
     <Filter Include="src\screen">
       <UniqueIdentifier>{8876c19e-fd40-4c31-b9a3-6830767f4196}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\stage">
+      <UniqueIdentifier>{6f7c8d9e-1234-4567-89ab-cdef01234567}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\wrapper">
       <UniqueIdentifier>{e31bceb2-91a4-422e-b4f8-49874f399883}</UniqueIdentifier>
@@ -115,6 +124,9 @@
     <Filter Include="src\presentation\animation">
       <UniqueIdentifier>{dd53084d-6473-42c0-9593-a6c70340de08}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\presentation\ui">
+      <UniqueIdentifier>{e7b9c1d2-3456-4789-abcd-0123456789ef}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\scene\factory">
       <UniqueIdentifier>{a8a82c41-fac2-41df-89e9-27e327588d94}</UniqueIdentifier>
     </Filter>
@@ -135,6 +147,12 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\presentation\ui\PauseMenu.h">
+      <Filter>src\presentation\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\stage\StageManager.h">
+      <Filter>src\stage</Filter>
+    </ClInclude>
     <ClInclude Include="src\object\baseObject2d\BaseObject2d.h">
       <Filter>src\object\baseObject2d</Filter>
     </ClInclude>
