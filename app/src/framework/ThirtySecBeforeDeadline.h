@@ -3,6 +3,7 @@
 #include <Framework/NimaFramework.h>
 #include <Features/Collision/Manager/CollisionManager.h>
 #include <memory>
+#include <chrono>
 #include <Features/Model/Loader/IModelLoader.h>
 #include <Features/Model/ModelStorage.h>
 #include <Features/Model/ModelManager.h>
@@ -51,4 +52,7 @@ private: /// ゲーム内オブジェクト
     std::unique_ptr<InputMapper<InputActionUI>> pInputMapperUI_ = nullptr; // !< UI用の入力マッパー
 
     CollisionManager* pCollisionManager_ = nullptr;
+
+    std::chrono::steady_clock::time_point lastUpdateTime_{};
+    bool isFirstUpdate_ = true;
 };

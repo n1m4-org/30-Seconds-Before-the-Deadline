@@ -24,6 +24,7 @@ void Router::Initialize()
 void Router::Update()
 {
 	BaseObject2d::Update();
+	ApplyRotationToSprite();
 }
 
 void Router::Draw()

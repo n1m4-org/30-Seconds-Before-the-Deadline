@@ -17,6 +17,8 @@
 
 #include <logic/ConvertNumTex/ConvertNumTex.h>
 #include <object/ObjectRule.h>
+#include <filesystem>
+#include <algorithm>
 
 void GameScene::Initialize()
 {
@@ -57,11 +59,33 @@ void GameScene::Initialize()
     // スカイボックスの初期化
     this->InitializeSkybox();
 
-	// マップデータの読み込み
-    MapLoad("test_map.json");
+    // マップファイル一覧の取得と初期マップの読み込み
+    RefreshMapFileList();
+    std::string initialMap = "test_map.json";
+    if (!mapFileList_.empty())
+    {
+        bool hasTestMap = false;
+        for (const auto& file : mapFileList_)
+        {
+            if (file == "test_map.json")
+            {
+                hasTestMap = true;
+                break;
+            }
+        }
+        if (!hasTestMap)
+        {
+            initialMap = mapFileList_[0];
+        }
+    }
+    currentLoadedMapFile_ = initialMap;
+    MapLoad(initialMap);
 
     // スプライトの初期化
     this->InitializeSprites();
+
+    // ステージ開始時の初期状態を保存
+    SaveInitialSnapshot();
 }
 
 void GameScene::Finalize()
@@ -84,10 +108,32 @@ void GameScene::Update()
 		}
 	}
 
+    // キーボードによるステージリセット (R) と アンドゥ (Z / U)
+    if (!ImGui::GetIO().WantCaptureKeyboard)
+    {
+        if (pInput_->TriggerKey(DIK_R) || pInput_->TriggerKeyC('R') || pInput_->TriggerKeyC('r'))
+        {
+            ResetStage();
+        }
+        else if (pInput_->TriggerKey(DIK_Z) || pInput_->TriggerKeyC('Z') || pInput_->TriggerKeyC('z') ||
+                 pInput_->TriggerKey(DIK_U) || pInput_->TriggerKeyC('U') || pInput_->TriggerKeyC('u'))
+        {
+            Undo();
+        }
+    }
+
     // プレイヤーのキー入力制御 (WASD移動・押し出し)
     if (pPlayer_)
     {
-        pPlayer_->HandleInput(pInput_, mapCollision_, currentMap_, pMapObjects_);
+        GameStepSnapshot snapshotBeforeMove = CaptureSnapshot();
+        if (pPlayer_->HandleInput(pInput_, mapCollision_, currentMap_, pMapObjects_))
+        {
+            undoStack_.push_back(snapshotBeforeMove);
+            if (undoStack_.size() > 100)
+            {
+                undoStack_.erase(undoStack_.begin());
+            }
+        }
     }
 
     // 全オブジェクトの座標およびアニメーション更新
@@ -242,6 +288,104 @@ void GameScene::UpdateTileSprite(int x, int y)
     pSpriteTile_[y][x]->SetSize({ tileSize_, tileSize_ });
 }
 
+bool GameScene::IsWall(int x, int y) const
+{
+    if (x < 0 || x >= mapWidth_ || y < 0 || y >= mapHeight_)
+    {
+        return false;
+    }
+    int tileType = mapData_[y][x];
+    return (tileType >= ObjectRule::kMapWallType && tileType < ObjectRule::kDynamicObjectType);
+}
+
+Path::Image::InGame::WallType GameScene::CalculateAutoWallType(int x, int y) const
+{
+    enum WallDirBit
+    {
+        kDirLeft   = 1 << 0, // 1
+        kDirRight  = 1 << 1, // 2
+        kDirTop    = 1 << 2, // 4
+        kDirBottom = 1 << 3, // 8
+    };
+
+    int mask = 0;
+    if (IsWall(x - 1, y)) mask |= kDirLeft;
+    if (IsWall(x + 1, y)) mask |= kDirRight;
+    if (IsWall(x, y - 1)) mask |= kDirTop;
+    if (IsWall(x, y + 1)) mask |= kDirBottom;
+
+    using namespace Path::Image::InGame;
+    static const WallType kMaskToWallType[16] = {
+        WallType::kT,    // 0: 孤立壁 -> wall_end_T (指定仕様)
+        WallType::kL,    // 1: L
+        WallType::kR,    // 2: R
+        WallType::kRL,   // 3: L + R
+        WallType::kT,    // 4: T
+        WallType::kLT,   // 5: L + T
+        WallType::kRT,   // 6: R + T
+        WallType::kLRT,  // 7: L + R + T
+        WallType::kB,    // 8: B
+        WallType::kLB,   // 9: L + B
+        WallType::kRB,   // 10: R + B
+        WallType::kLRB,  // 11: L + R + B
+        WallType::kTB,   // 12: T + B
+        WallType::kLBT,  // 13: L + T + B
+        WallType::kRBT,  // 14: R + T + B
+        WallType::kAll,  // 15: L + R + T + B
+    };
+
+    return kMaskToWallType[mask & 0x0F];
+}
+
+void GameScene::UpdateAutoWall(int x, int y)
+{
+    if (!IsWall(x, y))
+    {
+        return;
+    }
+
+    Path::Image::InGame::WallType wallType = CalculateAutoWallType(x, y);
+    int targetTileType = ObjectRule::kMapWallType + static_cast<int>(wallType);
+    if (mapData_[y][x] != targetTileType)
+    {
+        mapData_[y][x] = targetTileType;
+        UpdateTileSprite(x, y);
+    }
+}
+
+void GameScene::UpdateAutoWallWithNeighbors(int x, int y)
+{
+    if (IsWall(x, y))
+    {
+        UpdateAutoWall(x, y);
+    }
+
+    static const Vector2Int kDirs[] = { {-1, 0}, {1, 0}, {0, -1}, {0, 1} };
+    for (const auto& dir : kDirs)
+    {
+        int nx = x + dir.x;
+        int ny = y + dir.y;
+        if (IsWall(nx, ny))
+        {
+            UpdateAutoWall(nx, ny);
+        }
+    }
+}
+
+void GameScene::UpdateAllAutoWalls()
+{
+    for (int y = 0; y < mapHeight_; ++y)
+    {
+        for (int x = 0; x < mapWidth_; ++x)
+        {
+            if (IsWall(x, y))
+            {
+                UpdateAutoWall(x, y);
+            }
+        }
+    }
+}
+
 void GameScene::InitializeSprites()
 {
     TextureManager* tm = TextureManager::GetInstance();
@@ -297,11 +441,30 @@ void GameScene::MapEdit()
     {
         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f), "[SIGNAL STATUS]: NO SIGNAL REACHED PC");
     }
+
+    // アンドゥ & ステージリセット
+    std::string undoLabel = "Undo (Z) [" + std::to_string(undoStack_.size()) + "]";
+    if (ImGui::Button(undoLabel.c_str()))
+    {
+        Undo();
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Reset Stage (R)"))
+    {
+        ResetStage();
+    }
+
     ImGui::Separator();
+
+    bool isMapEditedThisFrame = false;
 
     // --- 1. 壁・タイルの種類 ---
     static const char* kWallTypeNames[] = {
-		"Simple Tile", "LB", "LBT", "LRB", "LRT", "LT", "RB", "RBT", "RL", "RT", "TB", "B", "L", "R", "T"
+        "Simple Tile (Floor)",
+        "Wall (Auto)",
+        "Manual: All", "Manual: LB", "Manual: LBT", "Manual: LRB", "Manual: LRT",
+        "Manual: LT", "Manual: RB", "Manual: RBT", "Manual: RL", "Manual: RT",
+        "Manual: TB", "Manual: B", "Manual: L", "Manual: R", "Manual: T"
     };
 
     // モード選択（0: 地形ペイント, 1: オブジェクト配置, 2: オブジェクト向き回転）
@@ -312,7 +475,7 @@ void GameScene::MapEdit()
 
     ImGui::Separator();
 
-    static int selectedWallIdx = 0;
+    static int selectedWallIdx = 1; // デフォルトで Wall (Auto) を選択
     static int selectedObjectType = 1; // 1: Player, 2: Router, 3: Repeater, 4: AlumiWall, 5: PC, 0: Remove
     static int selectedDirIdx = 2;     // 0: Up (0,-1), 1: Right (1,0), 2: Down (0,1), 3: Left (-1,0)
 
@@ -323,6 +486,12 @@ void GameScene::MapEdit()
     {
         ImGui::Text("Terrain Palette");
         ImGui::Combo("Wall Type", &selectedWallIdx, kWallTypeNames, IM_ARRAYSIZE(kWallTypeNames));
+        if (ImGui::Button("Update All Walls (Auto-Tile)"))
+        {
+            UpdateAllAutoWalls();
+            MapSave(savePath_);
+            isMapEditedThisFrame = true;
+        }
     }
     else
     {
@@ -338,8 +507,6 @@ void GameScene::MapEdit()
 
     ImGui::Separator();
     ImGui::Text("Map Grid (Click to paint/place, Right-Click to Rotate)");
-
-    bool isMapEditedThisFrame = false;
 
     for (int y = 0; y < mapHeight_; ++y)
     {
@@ -384,12 +551,41 @@ void GameScene::MapEdit()
             {
                 if (editorMode == 0) // 地形ペイント
                 {
-                    int targetTileType = (selectedWallIdx == 0) ? 0 : (selectedWallIdx + ObjectRule::kMapWallType);
-                    if (mapData_[y][x] != targetTileType)
+                    if (selectedWallIdx == 0) // 床（消去）
                     {
-                        mapData_[y][x] = targetTileType;
-                        UpdateTileSprite(x, y);
-                        isMapEditedThisFrame = true;
+                        if (mapData_[y][x] != 0)
+                        {
+                            mapData_[y][x] = 0;
+                            UpdateTileSprite(x, y);
+                            // 周囲の壁の接続状態が変わるため、隣接壁を再計算
+                            UpdateAutoWallWithNeighbors(x, y);
+                            isMapEditedThisFrame = true;
+                        }
+                    }
+                    else if (selectedWallIdx == 1) // Auto Wall
+                    {
+                        if (!IsWall(x, y))
+                        {
+                            mapData_[y][x] = ObjectRule::kMapWallType;
+                            UpdateAutoWallWithNeighbors(x, y);
+                            isMapEditedThisFrame = true;
+                        }
+                        else
+                        {
+                            // 既に壁の場合でも接続の整合性を更新
+                            UpdateAutoWallWithNeighbors(x, y);
+                        }
+                    }
+                    else // 手動指定 (selectedWallIdx >= 2)
+                    {
+                        int manualWallTypeIdx = selectedWallIdx - 2;
+                        int targetTileType = manualWallTypeIdx + ObjectRule::kMapWallType;
+                        if (mapData_[y][x] != targetTileType)
+                        {
+                            mapData_[y][x] = targetTileType;
+                            UpdateTileSprite(x, y);
+                            isMapEditedThisFrame = true;
+                        }
                     }
                 }
                 else // オブジェクト配置
@@ -432,17 +628,80 @@ void GameScene::MapEdit()
         }
     }
 
-    if (ImGui::IsMouseReleased(ImGuiMouseButton_Left) && isMapEditedThisFrame)
+    if ((ImGui::IsMouseReleased(ImGuiMouseButton_Left) || ImGui::IsMouseReleased(ImGuiMouseButton_Right)) && isMapEditedThisFrame)
+    {
+        MapSave(savePath_);
+        SaveInitialSnapshot();
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Map File Management");
+
+    // 1. 現在のマップ情報 & 上書き保存
+    ImGui::Text("Current Map: %s", currentLoadedMapFile_.c_str());
+    ImGui::SameLine();
+    if (ImGui::Button("Save Current Map"))
     {
         MapSave(savePath_);
     }
 
-    ImGui::Separator();
-    if (ImGui::Button("Save JSON"))
+    // 2. 既存マップの選択読み込み
+    if (!mapFileList_.empty())
     {
-        MapSave(savePath_);
+        std::vector<const char*> fileCStrs;
+        fileCStrs.reserve(mapFileList_.size());
+        for (const auto& file : mapFileList_)
+        {
+            fileCStrs.push_back(file.c_str());
+        }
+
+        if (selectedMapFileIndex_ < 0 || selectedMapFileIndex_ >= static_cast<int>(fileCStrs.size()))
+        {
+            selectedMapFileIndex_ = 0;
+        }
+
+        ImGui::SetNextItemWidth(180);
+        ImGui::Combo("Select Map", &selectedMapFileIndex_, fileCStrs.data(), static_cast<int>(fileCStrs.size()));
+        ImGui::SameLine();
+        if (ImGui::Button("Load Map"))
+        {
+            LoadMap(mapFileList_[selectedMapFileIndex_]);
+            isMapEditedThisFrame = true;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Refresh List"))
+        {
+            RefreshMapFileList();
+        }
     }
+    else
+    {
+        ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.2f, 1.0f), "No map files found.");
+        ImGui::SameLine();
+        if (ImGui::Button("Refresh List"))
+        {
+            RefreshMapFileList();
+        }
+    }
+
+    // 3. ファイル名を指定して新規作成
+    ImGui::SetNextItemWidth(150);
+    ImGui::InputText("New File Name", newMapNameInput_, sizeof(newMapNameInput_));
     ImGui::SameLine();
+    ImGui::SetNextItemWidth(50);
+    ImGui::InputInt("W##NewW", &newMapWidth_);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(50);
+    ImGui::InputInt("H##NewH", &newMapHeight_);
+    ImGui::SameLine();
+    if (ImGui::Button("Create New Map"))
+    {
+        CreateNewMap(newMapNameInput_, newMapWidth_, newMapHeight_);
+        isMapEditedThisFrame = true;
+    }
+
+    ImGui::Separator();
+    ImGui::Text("Map Display & Resize");
 	ImGui::PushItemWidth(100);
 
 	ImGui::DragFloat2("Map Offset", &mapOffset_.x, 1.0f, -1000.0f, 1000.0f);
@@ -680,5 +939,185 @@ void GameScene::UpdateCurrentMap()
                 static_cast<int>(object->GetObjectType()) + ObjectRule::kStaticObjectType;
         }
 	}
+}
+
+void GameScene::RefreshMapFileList()
+{
+    mapFileList_.clear();
+    std::string dirPath = std::string(Path::Resource::kJsonDir) + Path::Json::kMapDir;
+
+    std::filesystem::path dir(dirPath);
+    if (!std::filesystem::exists(dir))
+    {
+        std::filesystem::create_directories(dir);
+    }
+
+    for (const auto& entry : std::filesystem::directory_iterator(dir))
+    {
+        if (entry.is_regular_file() && entry.path().extension() == ".json")
+        {
+            mapFileList_.push_back(entry.path().filename().string());
+        }
+    }
+
+    std::sort(mapFileList_.begin(), mapFileList_.end());
+
+    selectedMapFileIndex_ = 0;
+    for (size_t i = 0; i < mapFileList_.size(); ++i)
+    {
+        if (mapFileList_[i] == currentLoadedMapFile_)
+        {
+            selectedMapFileIndex_ = static_cast<int>(i);
+            break;
+        }
+    }
+}
+
+void GameScene::CreateNewMap(const std::string& fileName, int width, int height)
+{
+    std::string actualFileName = fileName;
+    if (actualFileName.empty())
+    {
+        actualFileName = "new_map";
+    }
+    if (actualFileName.length() < 5 || actualFileName.substr(actualFileName.length() - 5) != ".json")
+    {
+        actualFileName += ".json";
+    }
+
+    mapWidth_ = (std::max)(1, width);
+    mapHeight_ = (std::max)(1, height);
+
+    mapData_.assign(mapHeight_, std::vector<int>(mapWidth_, 0));
+    signalStrengthMap_.assign(mapHeight_, std::vector<int>(mapWidth_, 0));
+
+    InitializeTestObjects();
+
+    currentLoadedMapFile_ = actualFileName;
+    savePath_ = std::string(Path::Resource::kJsonDir) + Path::Json::kMapDir + actualFileName;
+
+    MapSave(savePath_);
+
+    pSpriteTile_.clear();
+    pSignalSpriteTile_.clear();
+    InitializeSprites();
+    UpdateCurrentMap();
+
+    SaveInitialSnapshot();
+    RefreshMapFileList();
+}
+
+void GameScene::LoadMap(const std::string& fileName)
+{
+    currentLoadedMapFile_ = fileName;
+    MapLoad(fileName);
+
+    pSpriteTile_.clear();
+    pSignalSpriteTile_.clear();
+    InitializeSprites();
+
+    SaveInitialSnapshot();
+    RefreshMapFileList();
+}
+
+GameScene::GameStepSnapshot GameScene::CaptureSnapshot() const
+{
+    GameStepSnapshot snapshot;
+    snapshot.objectSnapshots.reserve(pMapObjects_.size());
+
+    for (const auto& obj : pMapObjects_)
+    {
+        if (obj)
+        {
+            ObjectSnapshot s;
+            s.position = obj->GetPosition();
+            s.angle = obj->GetAngle();
+            if (obj->GetObjectType() == ObjectType2d::kPC)
+            {
+                PC* pc = static_cast<PC*>(obj.get());
+                s.pcDataProgress = pc->GetDataProgress();
+                s.pcIsCleared = pc->IsCleared();
+            }
+            snapshot.objectSnapshots.push_back(s);
+        }
+    }
+    return snapshot;
+}
+
+void GameScene::RestoreSnapshot(const GameStepSnapshot& snapshot)
+{
+    if (snapshot.objectSnapshots.size() != pMapObjects_.size())
+    {
+        return;
+    }
+
+    for (size_t i = 0; i < pMapObjects_.size(); ++i)
+    {
+        auto& obj = pMapObjects_[i];
+        if (obj)
+        {
+            const auto& s = snapshot.objectSnapshots[i];
+            obj->SetPosition(s.position);
+            obj->SetAngle(s.angle);
+            obj->UpdateSpritePosition(tileSize_, mapOffset_);
+
+            if (obj->GetObjectType() == ObjectType2d::kPlayer)
+            {
+                Player* player = static_cast<Player*>(obj.get());
+                player->ForceUpdateTexture();
+            }
+            else if (obj->GetObjectType() == ObjectType2d::kRouter || obj->GetObjectType() == ObjectType2d::kRepeater)
+            {
+                obj->ApplyRotationToSprite();
+            }
+            else
+            {
+                obj->ResetRotation();
+            }
+
+            if (obj->GetObjectType() == ObjectType2d::kPC)
+            {
+                PC* pc = static_cast<PC*>(obj.get());
+                pc->SetProgress(s.pcDataProgress, s.pcIsCleared);
+            }
+        }
+    }
+
+    UpdateCurrentMap();
+}
+
+void GameScene::SaveInitialSnapshot()
+{
+    initialSnapshot_ = CaptureSnapshot();
+    undoStack_.clear();
+}
+
+void GameScene::Undo()
+{
+    if (pPlayer_)
+    {
+        pPlayer_->ResetHoldState();
+    }
+
+    if (undoStack_.empty())
+    {
+        return;
+    }
+
+    GameStepSnapshot prevSnapshot = undoStack_.back();
+    undoStack_.pop_back();
+
+    RestoreSnapshot(prevSnapshot);
+}
+
+void GameScene::ResetStage()
+{
+    if (pPlayer_)
+    {
+        pPlayer_->ResetHoldState();
+    }
+
+    RestoreSnapshot(initialSnapshot_);
+    undoStack_.clear();
 }
 

@@ -7,6 +7,7 @@
 #include <NiGui.h>
 #include <config/ResourcePath.h>
 #include <Features/DeltaTimeManager/DeltaTimeManager.h>
+#include <algorithm>
 
 #pragma comment(lib, "Ws2_32.lib")
 
@@ -55,6 +56,29 @@ void ThirtySecBeforeDeadline::Finalize()
 
 void ThirtySecBeforeDeadline::Update()
 {
+    // フレーム間の経過時間 (DeltaTime) を計測
+    auto now = std::chrono::steady_clock::now();
+    float deltaTime = 1.0f / 60.0f;
+
+    if (!isFirstUpdate_)
+    {
+        std::chrono::duration<float> elapsed = now - lastUpdateTime_;
+        deltaTime = elapsed.count();
+        // 極端な処理落ち・デバッグ停止・ウィンドウドラッグ等による異常値を保護
+        deltaTime = std::clamp(deltaTime, 0.0001f, 0.1f);
+    }
+    else
+    {
+        isFirstUpdate_ = false;
+    }
+    lastUpdateTime_ = now;
+
+    // デルタタイムマネージャへ最新値を登録
+    auto dtManager = DeltaTimeManager::GetInstance();
+    dtManager->SetDeltaTime(DeltaTimeChannelReserved::Default, deltaTime);
+    dtManager->SetDeltaTime(DeltaTimeChannelReserved::Game, deltaTime);
+    dtManager->SetDeltaTime(DeltaTimeChannelReserved::Particle, deltaTime);
+
     /// 当たり判定の更新
     pCollisionManager_->CheckAllCollision();
 

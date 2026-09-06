@@ -2,6 +2,7 @@
 #include <config/ResourcePath.h>
 #include <cmath>
 #include <algorithm>
+#include <Features/DeltaTimeManager/DeltaTimeManager.h>
 
 PC::PC()
 {
@@ -37,6 +38,16 @@ void PC::Update()
 
 	if (pSprite_)
 	{
+		float dt = 1.0f / 60.0f;
+		try
+		{
+			dt = DeltaTimeManager::GetInstance()->GetDeltaTime(static_cast<uint32_t>(DeltaTimeChannelReserved::Game));
+		}
+		catch (...)
+		{
+			dt = 1.0f / 60.0f;
+		}
+
 		// 電波が届いている場合、強度に応じた速度でデータ転送蓄積
 		// 強度10 -> 1秒, 強度9 -> 2秒 ... 強度1 -> 10秒 (所要時間 = 11 - strength 秒)
 		if (isSignalReceived_ && signalStrength_ > 0 && !isCleared_)
@@ -44,7 +55,7 @@ void PC::Update()
 			float requiredSeconds = 11.0f - static_cast<float>(signalStrength_);
 			if (requiredSeconds < 1.0f) requiredSeconds = 1.0f;
 
-			float fillSpeed = (1.0f / requiredSeconds) / 60.0f;
+			float fillSpeed = (1.0f / requiredSeconds) * dt;
 			dataProgress_ += fillSpeed;
 
 			if (dataProgress_ >= 1.0f)
@@ -55,7 +66,7 @@ void PC::Update()
 		}
 
 
-		blinkTimer_ += 0.08f; // アニメーションタイマー
+		blinkTimer_ += 4.8f * dt; // 0.08f * 60fps 相当
 		float factor = 0.5f + 0.5f * std::sin(blinkTimer_ * 3.5f);
 		float easeFactor = factor * factor * (3.0f - 2.0f * factor); // Smoothstep イージング
 

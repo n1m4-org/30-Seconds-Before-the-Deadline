@@ -75,12 +75,20 @@ public:
 		return 0.0f;
 	}
 
-	void ApplyRotationToSprite()
+	virtual void ApplyRotationToSprite()
 	{
 		if (pSprite_)
 		{
 			float rotationRad = GetRotationAngleRad();
 			pSprite_->SetRotation(rotationRad);
+		}
+	}
+
+	void ResetRotation()
+	{
+		if (pSprite_)
+		{
+			pSprite_->SetRotation(0.0f);
 		}
 	}
 

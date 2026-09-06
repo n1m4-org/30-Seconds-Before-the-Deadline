@@ -1,6 +1,7 @@
 #include "Player.h"
 #include <config/ResourcePath.h>
 #include <dinput.h>
+#include <Features/DeltaTimeManager/DeltaTimeManager.h>
 
 Player::Player()
 {
@@ -24,71 +25,135 @@ void Player::Initialize()
 	SetSpriteTexture(static_cast<size_t>(Path::Image::PlayerTextureNames::front));
 }
 
-void Player::HandleInput(Input* pInput, MapCollision& mapCollision,
+bool Player::HandleInput(Input* pInput, MapCollision& mapCollision,
                          const std::vector<std::vector<int>>& currentMap,
                          const std::vector<std::unique_ptr<BaseObject2d>>& objects)
 {
-	if (!pInput || isMoving_)
+	if (!pInput)
 	{
-		return;
+		return false;
 	}
 
+	// 現在押されている方向を取得（PushKeyでホールド判定。WASD + 矢印キー）
+	Vector2Int curPushDir = { 0, 0 };
+	if (pInput->PushKey(DIK_W) || pInput->PushKeyC('W') || pInput->PushKeyC('w') || pInput->PushKey(DIK_UP))
+	{
+		curPushDir = { 0, -1 };
+	}
+	else if (pInput->PushKey(DIK_S) || pInput->PushKeyC('S') || pInput->PushKeyC('s') || pInput->PushKey(DIK_DOWN))
+	{
+		curPushDir = { 0, 1 };
+	}
+	else if (pInput->PushKey(DIK_A) || pInput->PushKeyC('A') || pInput->PushKeyC('a') || pInput->PushKey(DIK_LEFT))
+	{
+		curPushDir = { -1, 0 };
+	}
+	else if (pInput->PushKey(DIK_D) || pInput->PushKeyC('D') || pInput->PushKeyC('d') || pInput->PushKey(DIK_RIGHT))
+	{
+		curPushDir = { 1, 0 };
+	}
+
+	bool shouldMove = false;
 	Vector2Int moveDir = { 0, 0 };
 
-	// W キー (上)
-	if (pInput->TriggerKey(DIK_W) || pInput->TriggerKeyC('W') || pInput->TriggerKeyC('w'))
+	float dt = 1.0f / 60.0f;
+	try
 	{
-		moveDir = { 0, -1 };
+		dt = DeltaTimeManager::GetInstance()->GetDeltaTime(static_cast<uint32_t>(DeltaTimeChannelReserved::Game));
 	}
-	// S キー (下)
-	else if (pInput->TriggerKey(DIK_S) || pInput->TriggerKeyC('S') || pInput->TriggerKeyC('s'))
+	catch (...)
 	{
-		moveDir = { 0, 1 };
-	}
-	// A キー (左)
-	else if (pInput->TriggerKey(DIK_A) || pInput->TriggerKeyC('A') || pInput->TriggerKeyC('a'))
-	{
-		moveDir = { -1, 0 };
-	}
-	// D キー (右)
-	else if (pInput->TriggerKey(DIK_D) || pInput->TriggerKeyC('D') || pInput->TriggerKeyC('d'))
-	{
-		moveDir = { 1, 0 };
+		dt = 1.0f / 60.0f;
 	}
 
-	if (moveDir.x != 0 || moveDir.y != 0)
+	if (curPushDir.x != 0 || curPushDir.y != 0)
 	{
+		if (curPushDir != holdDir_)
+		{
+			// 新しい方向が押された：即座に1歩移動し、長押しタイマー開始
+			holdDir_ = curPushDir;
+			holdTimer_ = 0.0f;
+			repeatTimer_ = 0.0f;
+			shouldMove = true;
+			moveDir = curPushDir;
+		}
+		else
+		{
+			// 同じ方向を押し続けている
+			holdTimer_ += dt;
+			if (holdTimer_ >= kInitialRepeatDelay)
+			{
+				repeatTimer_ += dt;
+				if (repeatTimer_ >= kRepeatInterval)
+				{
+					repeatTimer_ -= kRepeatInterval;
+					shouldMove = true;
+					moveDir = curPushDir;
+				}
+			}
+		}
+	}
+	else
+	{
+		// 何も押されていない：リセット
+		holdDir_ = { 0, 0 };
+		holdTimer_ = 0.0f;
+		repeatTimer_ = 0.0f;
+	}
+
+	if (shouldMove)
+	{
+		// 連続移動でまだ前回の補間が残っている場合は即座に目標位置へスナップして次へ進む
+		if (isMoving_)
+		{
+			currentRenderPos_ = targetRenderPos_;
+			isMoving_ = false;
+		}
+
 		angle_ = moveDir;
 		if (mapCollision.TryMove(currentMap, objects, *this, moveDir))
 		{
-			anmationFrame_ == 0 ? anmationFrame_ = 1 : anmationFrame_ = 0; // アニメーションフレーム切り替え
+			anmationFrame_ = (anmationFrame_ == 0) ? 1 : 0; // アニメーションフレーム切り替え
 			Vector2 spriteSize = pSprite_->GetSize();
 			pSprite_->SetTextureLeftTop({ static_cast<float>(anmationFrame_) * 128.0f, 0.0f });
+			return true;
 		}
 	}
 
+	return false;
+}
+
+void Player::ForceUpdateTexture()
+{
+	if (pSprite_)
+	{
+		pSprite_->SetRotation(0.0f); // プレイヤーはテクスチャ画像で向きを表すためスプライトは回転させない
+	}
+
+	if (angle_ == Vector2Int{ 0, -1 }) // 上
+	{
+		SetSpriteTexture(static_cast<size_t>(Path::Image::PlayerTextureNames::back));
+	}
+	else if (angle_ == Vector2Int{ 0, 1 }) // 下
+	{
+		SetSpriteTexture(static_cast<size_t>(Path::Image::PlayerTextureNames::front));
+	}
+	else if (angle_ == Vector2Int{ -1, 0 }) // 左
+	{
+		SetSpriteTexture(static_cast<size_t>(Path::Image::PlayerTextureNames::left));
+	}
+	else if (angle_ == Vector2Int{ 1, 0 }) // 右
+	{
+		SetSpriteTexture(static_cast<size_t>(Path::Image::PlayerTextureNames::right));
+	}
+	beforeAngle_ = angle_;
 }
 
 void Player::UpdateSpriteTextureBasedOnAngle()
 {
-	if(beforeAngle_ != angle_)
+	if (beforeAngle_ != angle_)
 	{
-		if (angle_ == Vector2Int{ 0, -1 }) // 上
-		{
-			SetSpriteTexture(static_cast<size_t>(Path::Image::PlayerTextureNames::back));
-		}
-		else if (angle_ == Vector2Int{ 0, 1 }) // 下
-		{
-			SetSpriteTexture(static_cast<size_t>(Path::Image::PlayerTextureNames::front));
-		}
-		else if (angle_ == Vector2Int{ -1, 0 }) // 左
-		{
-			SetSpriteTexture(static_cast<size_t>(Path::Image::PlayerTextureNames::left));
-		}
-		else if (angle_ == Vector2Int{ 1, 0 }) // 右
-		{
-			SetSpriteTexture(static_cast<size_t>(Path::Image::PlayerTextureNames::right));
-		}
+		ForceUpdateTexture();
 	}
 }
 
