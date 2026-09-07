@@ -58,6 +58,11 @@ void BaseObject2d::UpdateSpritePosition(float tileSize, const Vector2& mapOffset
 
 void BaseObject2d::Update()
 {
+	if (!isActive_)
+	{
+		return;
+	}
+
 	if (isMoving_)
 	{
 		float dt = 1.0f / 60.0f;
@@ -100,6 +105,11 @@ void BaseObject2d::Update()
 
 void BaseObject2d::Draw()
 {
+	if (!isActive_)
+	{
+		return;
+	}
+
 	if (pSprite_)
 	{
 		pSprite_->Draw1F();
