@@ -58,6 +58,11 @@ public:
     void Undo();
 
     /// <summary>
+    /// PCが電波を受信して何%蓄積したか
+    /// </summary>
+	float GetPcDataProgress() const;
+
+    /// <summary>
     /// ステージクリア状態 (PCが電波を受信して100%蓄積完了したか)
     /// </summary>
     bool IsCleared() const;

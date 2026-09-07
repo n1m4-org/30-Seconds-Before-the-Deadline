@@ -734,6 +734,22 @@ void StageManager::Undo()
     RestoreSnapshot(prevSnapshot);
 }
 
+float StageManager::GetPcDataProgress() const
+{
+    for (const auto& obj : pMapObjects_)
+    {
+        if (obj && obj->GetObjectType() == ObjectType2d::kPC)
+        {
+            const PC* pc = static_cast<const PC*>(obj.get());
+            if (pc)
+            {
+                return pc->GetDataProgress();
+            }
+        }
+    }
+    return 0.0f;
+}
+
 void StageManager::ResetStage()
 {
     if (pPlayer_)

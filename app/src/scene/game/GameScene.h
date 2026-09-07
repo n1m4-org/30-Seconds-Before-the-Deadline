@@ -14,6 +14,7 @@
 #include <logic/input/InputAction.h>
 #include <stage/StageManager.h>
 #include <presentation/ui/PauseMenu.h>
+#include <presentation/ui/InGameUI.h>
 #include <memory>
 
 /// <summary>
@@ -56,6 +57,7 @@ private:
 
     std::unique_ptr<StageManager> pStageManager_ = nullptr;  // !< ステージ管理クラス
     std::unique_ptr<PauseMenu>    pPauseMenu_ = nullptr;     // !< ポーズメニュー
+    std::unique_ptr<InGameUI>     pInGameUI_ = nullptr;      // !< インゲームUI
     bool                          isPaused_ = false;         // !< ポーズ中フラグ
     bool                          isChangingScene_ = false;  // !< シーン遷移中フラグ
 

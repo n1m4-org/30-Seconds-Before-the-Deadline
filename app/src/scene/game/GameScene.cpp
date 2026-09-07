@@ -18,6 +18,9 @@ void GameScene::Initialize()
     pCubemapSystem_ = std::any_cast<CubemapSystem*>(pArgs_->Get("CubemapSystem"));
     pDx12_ = std::any_cast<DirectX12*>(pArgs_->Get("DirectX12"));
     pInputMapperUI_ = std::any_cast<InputMapper<InputActionUI>*>(pArgs_->Get("InputMapperUI"));
+	pInGameUI_ = std::make_unique<InGameUI>();
+    pInGameUI_->Initialize();
+
 
     /// Canvasの初期化
     {
@@ -112,7 +115,7 @@ void GameScene::Update()
             else if (action == PauseMenuAction::StageSelect)
             {
                 // 2. ステージセレクトへ (現在は未実装の仮配置のため通知/待機)
-                // 将来的に StageSelectScene への遷移を実装可能
+                // 将来的に StageSelectScene への遷移を実装
             }
             else if (action == PauseMenuAction::Title)
             {
@@ -131,6 +134,7 @@ void GameScene::Update()
         if (pStageManager_)
         {
             pStageManager_->Update(pInput_);
+            pInGameUI_->Update(pStageManager_->GetPcDataProgress());
 
             // ステージクリア時の処理
             if (pStageManager_->IsCleared())
@@ -151,7 +155,13 @@ void GameScene::Draw()
         pStageManager_->Draw();
     }
 
-    // 2. ポーズメニューの描画 (最前面オーバーレイ)
+    // 2. インゲームUIの描画
+    if(pInGameUI_)
+    {
+		pInGameUI_->Draw();
+    }
+
+    // 3. ポーズメニューの描画 (最前面オーバーレイ)
     if (isPaused_ && pPauseMenu_)
     {
         pPauseMenu_->Draw();

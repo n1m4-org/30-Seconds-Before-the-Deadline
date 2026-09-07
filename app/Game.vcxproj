@@ -28,6 +28,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\presentation\ui\InGameUI.cpp" />
     <ClCompile Include="src\object\baseObject2d\BaseObject2d.cpp" />
     <ClCompile Include="src\object\player\Player.cpp" />
     <ClCompile Include="src\object\router\Router.cpp" />
@@ -50,6 +51,7 @@
     <ClCompile Include="src\wrapper\InputAwareSprite.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\presentation\ui\InGameUI.h" />
     <ClInclude Include="src\presentation\ui\PauseMenu.h" />
     <ClInclude Include="src\stage\StageManager.h" />
     <ClInclude Include="src\object\baseObject2d\BaseObject2d.h" />

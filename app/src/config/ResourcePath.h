@@ -78,6 +78,9 @@ namespace Path::Image
     /// [ ローディング画面 ]
     inline constexpr const char* kLoading = "load/NOWLOADING.dds";
 
+    // 数字
+	inline constexpr const char* kUINumbers = "game/ui/number_x96y128.png";
+
     /// [ インゲーム ]
     namespace InGame
     {
@@ -101,6 +104,15 @@ namespace Path::Image
 
         inline constexpr const char* kScoreUpRate2 = "game/x2.png";
         inline constexpr const char* kScoreUpRate3 = "game/x3.png";
+
+
+        // UI
+        inline constexpr const char* kProgressBar = "game/ui/progressBar.png";
+        inline constexpr const char* kProgressBarFrame = "game/ui/progressBar_frame.png";
+        inline constexpr const char* kProgressBarText = "game/ui/progressBar_text.png";
+        inline constexpr const char* kTimelimitText = "game/ui/timelimit_text.png";
+        inline constexpr const char* kMoveExplanationText = "game/ui/move_Explanation_UI.png";
+        inline constexpr const char* kClearText = "game/ui/clear_text_UI.png";
 
         // マップタイル
         inline constexpr const char* kTestTile = "game/tile/Simple.png";
