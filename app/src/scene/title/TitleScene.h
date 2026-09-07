@@ -27,6 +27,7 @@
 #include <drawable/particle/Emitter/ParticleEmitter.h>
 #include <drawable/particle/Particle.h>
 #include <scene/title/animation/PlayerPopupAnimation.h>
+#include <Features/Animation/AnimationEditor.hpp>
 
 /// <summary>
 /// タイトルシーン

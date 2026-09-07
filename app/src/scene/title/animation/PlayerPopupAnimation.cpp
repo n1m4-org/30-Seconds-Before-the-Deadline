@@ -5,10 +5,12 @@
 
 void PlayerPopupAnimation::Initialize()
 {
-    pDebugEntry_ = std::make_unique<DebugEntry<PlayerPopupAnimation>>("TitleScene", "PlayerPopupAnimation", this);
-
     this->InitializeSprite();
     this->InitializeTextureHandle();
+
+#ifdef _DEBUG
+    reg_ = AnimationEditor::GetInstance()->Register("PlayerPopup", timelinePosition_);
+#endif // _DEBUG
 }
 
 void PlayerPopupAnimation::Update()
@@ -21,11 +23,6 @@ void PlayerPopupAnimation::Update()
 void PlayerPopupAnimation::Draw1F()
 {
     pSpritePlayer_->Draw1F();
-}
-
-void PlayerPopupAnimation::ImGui()
-{
-    timelinePosition_.ImGui();
 }
 
 void PlayerPopupAnimation::InitializeSprite()
