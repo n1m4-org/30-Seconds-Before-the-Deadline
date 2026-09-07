@@ -162,6 +162,18 @@ namespace Path::Image
 		inline constexpr const char* kRouter = "game/objects/router.png";
 		inline constexpr const char* kRepeater = "game/objects/repeater.png";
 		inline constexpr const char* kPC = "game/objects/PC.png";
+
+		enum class RotatingFloorType
+		{
+            kRight,
+			kLeft,
+			RotatingFloorTypeCount
+		};
+        inline constexpr const char* kRotatingFloors[static_cast<std::size_t>(RotatingFloorType::RotatingFloorTypeCount)] =
+        { 
+            "game/objects/rotating_floor_R.png", 
+            "game/objects/rotating_floor_L.png" 
+        };
     }
 
 
