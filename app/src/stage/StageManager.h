@@ -11,6 +11,7 @@
 #include <object/repeater/Repeater.h>
 #include <object/alumiWall/AlumiWall.h>
 #include <object/pc/PC.h>
+#include <object/rotatingFloor/RotatingFloor.h>
 #include <logic/mapCollision/MapCollision.h>
 #include <logic/signal/SignalSystem.h>
 #include <config/ResourcePath.h>
@@ -120,6 +121,8 @@ private:
     {
         Vector2Int position;
         Vector2Int angle;
+        RotatingFloorType rotatingFloorType = RotatingFloorType::kRight;
+        bool isActive = true;
         float pcDataProgress = 0.0f;
         bool pcIsCleared = false;
     };
@@ -134,7 +137,7 @@ private:
     void SaveInitialSnapshot();
 
     // 指定タイプのオブジェクトを作成し配置するヘルパー関数
-    BaseObject2d* CreateObject(ObjectType2d type, const Vector2Int& pos, const Vector2Int& dir = { 0, 1 });
+    BaseObject2d* CreateObject(ObjectType2d type, const Vector2Int& pos, const Vector2Int& dir = { 0, 1 }, RotatingFloorType floorType = RotatingFloorType::kRight);
     // 指定座標にあるオブジェクトを削除する
     void RemoveObjectAt(const Vector2Int& pos);
 

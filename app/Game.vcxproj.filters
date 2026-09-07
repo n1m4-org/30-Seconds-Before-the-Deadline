@@ -53,6 +53,9 @@
     <ClCompile Include="src\presentation\ui\PauseMenu.cpp">
       <Filter>src\presentation\ui</Filter>
     </ClCompile>
+    <ClCompile Include="src\presentation\ui\ResultMenu.cpp">
+      <Filter>src\presentation\ui</Filter>
+    </ClCompile>
     <ClCompile Include="src\stage\StageManager.cpp">
       <Filter>src\stage</Filter>
     </ClCompile>
@@ -60,6 +63,7 @@
       <Filter>src\wrapper</Filter>
     </ClCompile>
     <ClCompile Include="src\presentation\ui\InGameUI.cpp" />
+    <ClCompile Include="src\object\rotatingFloor\RotatingFloor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -151,6 +155,9 @@
     <ClInclude Include="src\presentation\ui\PauseMenu.h">
       <Filter>src\presentation\ui</Filter>
     </ClInclude>
+    <ClInclude Include="src\presentation\ui\ResultMenu.h">
+      <Filter>src\presentation\ui</Filter>
+    </ClInclude>
     <ClInclude Include="src\stage\StageManager.h">
       <Filter>src\stage</Filter>
     </ClInclude>
@@ -218,5 +225,6 @@
       <Filter>src\wrapper</Filter>
     </ClInclude>
     <ClInclude Include="src\presentation\ui\InGameUI.h" />
+    <ClInclude Include="src\object\rotatingFloor\RotatingFloor.h" />
   </ItemGroup>
 </Project>

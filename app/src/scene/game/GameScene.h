@@ -14,6 +14,7 @@
 #include <logic/input/InputAction.h>
 #include <stage/StageManager.h>
 #include <presentation/ui/PauseMenu.h>
+#include <presentation/ui/ResultMenu.h>
 #include <presentation/ui/InGameUI.h>
 #include <memory>
 
@@ -52,13 +53,16 @@ private:
 private:
     std::unique_ptr<Canvas>     pCanvasBack_ = nullptr;      // !< 背景キャンバス
     std::unique_ptr<Canvas>     pCanvasSprite_ = nullptr;    // !< スプライトキャンバス
+    std::unique_ptr<Canvas>     pCanvasUI_ = nullptr;        // !< UIキャンバス
     std::unique_ptr<GameEye>    gameEye_ = {};               // !< ゲームカメラ
     std::unique_ptr<Skybox>     pSkybox_ = nullptr;          // !< スカイボックス
 
     std::unique_ptr<StageManager> pStageManager_ = nullptr;  // !< ステージ管理クラス
     std::unique_ptr<PauseMenu>    pPauseMenu_ = nullptr;     // !< ポーズメニュー
+    std::unique_ptr<ResultMenu>   pResultMenu_ = nullptr;    // !< リザルトメニュー
     std::unique_ptr<InGameUI>     pInGameUI_ = nullptr;      // !< インゲームUI
     bool                          isPaused_ = false;         // !< ポーズ中フラグ
+    bool                          isResult_ = false;         // !< リザルト中フラグ
     bool                          isChangingScene_ = false;  // !< シーン遷移中フラグ
 
     /// 他クラスのインスタンス参照

@@ -35,12 +35,17 @@ void GameScene::Initialize()
         pCanvasBack_ = std::make_unique<Canvas>();
         pCanvasBack_->Initialize(params);
 
-        params.name = "GameCanvas2";
+        params.name = "GameCanvasSprite";
         pCanvasSprite_ = std::make_unique<Canvas>();
         pCanvasSprite_->Initialize(params);
 
+		params.name = "GameCanvasUI";
+		pCanvasUI_ = std::make_unique<Canvas>();
+		pCanvasUI_->Initialize(params);
+
         pLayer_->AddCanvas(pCanvasBack_.get());
         pLayer_->AddCanvas(pCanvasSprite_.get());
+        pLayer_->AddCanvas(pCanvasUI_.get());
     }
 
     // カメラの初期化
@@ -56,12 +61,19 @@ void GameScene::Initialize()
     // ポーズメニューの初期化
     pPauseMenu_ = std::make_unique<PauseMenu>();
     pPauseMenu_->Initialize();
+
+    // リザルトメニューの初期化
+    pResultMenu_ = std::make_unique<ResultMenu>();
+    pResultMenu_->Initialize();
+
     isPaused_ = false;
+    isResult_ = false;
     isChangingScene_ = false;
 }
 
 void GameScene::Finalize()
 {
+    pResultMenu_.reset();
     pPauseMenu_.reset();
     pStageManager_.reset();
     pSkybox_.reset();
@@ -69,8 +81,10 @@ void GameScene::Finalize()
     gameEye_.reset();
     pLayer_->RemoveCanvas(pCanvasBack_.get());
     pLayer_->RemoveCanvas(pCanvasSprite_.get());
+	pLayer_->RemoveCanvas(pCanvasUI_.get());
     pCanvasBack_->Finalize();
     pCanvasSprite_->Finalize();
+    pCanvasUI_->Finalize();
 }
 
 void GameScene::Update()
@@ -81,8 +95,8 @@ void GameScene::Update()
         return;
     }
 
-    // Escキーによるポーズメニューの開閉トグル
-    if (pInput_ && !ImGui::GetIO().WantCaptureKeyboard)
+    // Escキーによるポーズメニューの開閉トグル (リザルト中以外)
+    if (pInput_ && !ImGui::GetIO().WantCaptureKeyboard && !isResult_)
     {
         if (pInput_->TriggerKey(DIK_ESCAPE))
         {
@@ -98,7 +112,7 @@ void GameScene::Update()
         }
     }
 
-    // ポーズ中の更新処理
+    // 1. ポーズ中の更新処理
     if (isPaused_)
     {
         if (pPauseMenu_)
@@ -108,18 +122,17 @@ void GameScene::Update()
             PauseMenuAction action = pPauseMenu_->ConsumeAction();
             if (action == PauseMenuAction::Resume)
             {
-                // 1. ゲームへ戻る
+                // ゲームへ戻る
                 isPaused_ = false;
                 pPauseMenu_->Close();
             }
             else if (action == PauseMenuAction::StageSelect)
             {
-                // 2. ステージセレクトへ (現在は未実装の仮配置のため通知/待機)
-                // 将来的に StageSelectScene への遷移を実装
+                // ステージセレクトへ (現在は未実装の仮配置のため通知/待機)
             }
             else if (action == PauseMenuAction::Title)
             {
-                // 3. タイトルへ (シャッタートランジション付きで遷移)
+                // タイトルへ (シャッタートランジション付きで遷移)
                 isChangingScene_ = true;
                 isPaused_ = false;
                 pPauseMenu_->Close();
@@ -128,7 +141,40 @@ void GameScene::Update()
             }
         }
     }
-    // 通常プレイ時の更新処理 (ステージ更新)
+    // 2. リザルト中の更新処理
+    else if (isResult_)
+    {
+        if (pResultMenu_)
+        {
+            pResultMenu_->Update(pInput_);
+
+            ResultMenuAction action = pResultMenu_->ConsumeAction();
+            if (action == ResultMenuAction::NextStage)
+            {
+                // 次のステージへ (ステージのリセットおよびリザルト閉じる)
+                isResult_ = false;
+                pResultMenu_->Close();
+                if (pStageManager_)
+                {
+                    pStageManager_->ResetStage();
+                }
+            }
+            else if (action == ResultMenuAction::StageSelect)
+            {
+                // ステージセレクトへ (現在は未実装の仮配置のため通知/待機)
+            }
+            else if (action == ResultMenuAction::Title)
+            {
+                // タイトルへ (シャッタートランジション付きで遷移)
+                isChangingScene_ = true;
+                isResult_ = false;
+                pResultMenu_->Close();
+                pSceneManager_->ReserveScene("TitleScene", std::make_unique<TransShutter>());
+                return;
+            }
+        }
+    }
+    // 3. 通常プレイ時の更新処理 (ステージ更新)
     else
     {
         if (pStageManager_)
@@ -139,7 +185,11 @@ void GameScene::Update()
             // ステージクリア時の処理
             if (pStageManager_->IsCleared())
             {
-                // 現状はPC自身が点滅演出を行い、エディタ上で接続完了が表示される
+                isResult_ = true;
+                if (pResultMenu_)
+                {
+                    pResultMenu_->Open();
+                }
             }
         }
     }
@@ -155,16 +205,24 @@ void GameScene::Draw()
         pStageManager_->Draw();
     }
 
+    CanvasScope canvasScopeUI(pCanvasUI_.get());
+
     // 2. インゲームUIの描画
-    if(pInGameUI_)
+    if (pInGameUI_)
     {
-		pInGameUI_->Draw();
+        pInGameUI_->Draw();
     }
 
     // 3. ポーズメニューの描画 (最前面オーバーレイ)
     if (isPaused_ && pPauseMenu_)
     {
         pPauseMenu_->Draw();
+    }
+
+    // 4. リザルトメニューの描画 (最前面オーバーレイ)
+    if (isResult_ && pResultMenu_)
+    {
+        pResultMenu_->Draw();
     }
 }
 

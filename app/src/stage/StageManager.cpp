@@ -102,6 +102,11 @@ void StageManager::Update(Input* pInput)
         {
             object->UpdateSpritePosition(tileSize_, mapOffset_);
             object->Update();
+
+            if (object->GetObjectType() == ObjectType2d::kRotatingFloor)
+            {
+                static_cast<RotatingFloor*>(object.get())->CheckAndRotateRepeater(pMapObjects_);
+            }
         }
     }
 
@@ -129,18 +134,22 @@ void StageManager::Update(Input* pInput)
             int strength = (y < static_cast<int>(signalStrengthMap_.size()) && x < static_cast<int>(signalStrengthMap_[y].size())) ? signalStrengthMap_[y][x] : 0;
             if (pSignalSpriteTile_[y][x])
             {
-                // そのマスにオブジェクト(中継器・ルーター・プレイヤー等)が存在するかチェック
+                // そのマスに障害物・遮蔽オブジェクト(中継器・ルーター・プレイヤー等)が存在するかチェック
                 bool hasObjectOnTile = false;
                 for (const auto& obj : pMapObjects_)
                 {
-                    if (obj && obj->GetPosition() == Vector2Int{ x, y })
+                    if (obj && obj->IsActive() && obj->GetPosition() == Vector2Int{ x, y })
                     {
-                        hasObjectOnTile = true;
-                        break;
+                        // RotatingFloor (回転床) は床扱いのため電波を隠さない
+                        if (obj->GetObjectType() != ObjectType2d::kRotatingFloor)
+                        {
+                            hasObjectOnTile = true;
+                            break;
+                        }
                     }
                 }
 
-                // 電波が存在し、かつオブジェクトが乗っていない床マスのみ電波を描画！
+                // 電波が存在し、かつ遮蔽オブジェクトが乗っていない床マス（回転床を含む）で電波を描画！
                 bool showSignal = (strength > 0) && !hasObjectOnTile;
                 pSignalSpriteTile_[y][x]->SetEnableDraw(showSignal);
 
@@ -199,10 +208,17 @@ void StageManager::Draw()
         }
     }
 
-    // 3. 前面: オブジェクトを描画
+    // 3. 前面: オブジェクトを描画 (床オブジェクト RotatingFloor を最下層に描画)
     for (auto& object : pMapObjects_)
     {
-        if (object)
+        if (object && object->GetObjectType() == ObjectType2d::kRotatingFloor)
+        {
+            object->Draw();
+        }
+    }
+    for (auto& object : pMapObjects_)
+    {
+        if (object && object->GetObjectType() != ObjectType2d::kRotatingFloor)
         {
             object->Draw();
         }
@@ -374,10 +390,27 @@ void StageManager::InitializeSprites()
     }
 }
 
-BaseObject2d* StageManager::CreateObject(ObjectType2d type, const Vector2Int& pos, const Vector2Int& dir)
+BaseObject2d* StageManager::CreateObject(ObjectType2d type, const Vector2Int& pos, const Vector2Int& dir, RotatingFloorType floorType)
 {
-    // 指定位置に既存のオブジェクトがあれば削除
-    RemoveObjectAt(pos);
+    // 同種レイヤー（床同士、または非床オブジェクト同士）の既存オブジェクトがあれば削除
+    for (auto it = pMapObjects_.begin(); it != pMapObjects_.end(); ++it)
+    {
+        if (*it && (*it)->GetPosition() == pos)
+        {
+            bool isTargetFloor = (type == ObjectType2d::kRotatingFloor);
+            bool isCurrentFloor = ((*it)->GetObjectType() == ObjectType2d::kRotatingFloor);
+
+            if (isTargetFloor == isCurrentFloor)
+            {
+                if ((*it).get() == pPlayer_)
+                {
+                    pPlayer_ = nullptr;
+                }
+                pMapObjects_.erase(it);
+                break;
+            }
+        }
+    }
 
     std::unique_ptr<BaseObject2d> newObj = nullptr;
 
@@ -397,6 +430,13 @@ BaseObject2d* StageManager::CreateObject(ObjectType2d type, const Vector2Int& po
         break;
     case ObjectType2d::kPC:
         newObj = std::make_unique<PC>();
+        break;
+    case ObjectType2d::kRotatingFloor:
+        {
+            auto rotFloor = std::make_unique<RotatingFloor>();
+            rotFloor->SetRotatingFloorType(floorType);
+            newObj = std::move(rotFloor);
+        }
         break;
     default:
         return nullptr;
@@ -425,7 +465,7 @@ BaseObject2d* StageManager::CreateObject(ObjectType2d type, const Vector2Int& po
 
 void StageManager::RemoveObjectAt(const Vector2Int& pos)
 {
-    for (auto it = pMapObjects_.begin(); it != pMapObjects_.end(); ++it)
+    for (auto it = pMapObjects_.begin(); it != pMapObjects_.end();)
     {
         if (*it && (*it)->GetPosition() == pos)
         {
@@ -433,8 +473,11 @@ void StageManager::RemoveObjectAt(const Vector2Int& pos)
             {
                 pPlayer_ = nullptr;
             }
-            pMapObjects_.erase(it);
-            break;
+            it = pMapObjects_.erase(it);
+        }
+        else
+        {
+            ++it;
         }
     }
     UpdateCurrentMap();
@@ -456,6 +499,10 @@ void StageManager::MapSave(const std::string& path)
             objJson["y"] = obj->GetPosition().y;
             objJson["dirX"] = obj->GetAngle().x;
             objJson["dirY"] = obj->GetAngle().y;
+            if (obj->GetObjectType() == ObjectType2d::kRotatingFloor)
+            {
+                objJson["floorType"] = static_cast<int>(static_cast<RotatingFloor*>(obj.get())->GetRotatingFloorType());
+            }
             objectsJson.push_back(objJson);
         }
     }
@@ -518,7 +565,12 @@ void StageManager::MapLoad(const std::string& path)
                     dir.x = objJson["dirX"].get<int>();
                     dir.y = objJson["dirY"].get<int>();
                 }
-                CreateObject(type, { x, y }, dir);
+                RotatingFloorType floorType = RotatingFloorType::kRight;
+                if (objJson.contains("floorType"))
+                {
+                    floorType = static_cast<RotatingFloorType>(objJson["floorType"].get<int>());
+                }
+                CreateObject(type, { x, y }, dir, floorType);
             }
         }
     }
@@ -554,6 +606,11 @@ void StageManager::UpdateCurrentMap()
     currentMap_ = mapData_;
     for (auto&& object : pMapObjects_)
     {
+        if (!object || object->GetObjectType() == ObjectType2d::kRotatingFloor)
+        {
+            continue; // 床オブジェクトは通過可能領域のため障害物マップに登録しない
+        }
+
         Vector2Int position = object->GetPosition();
         if (position.y >= 0 && static_cast<size_t>(position.y) < currentMap_.size() &&
             position.x >= 0 && static_cast<size_t>(position.x) < currentMap_[position.y].size())
@@ -656,6 +713,11 @@ StageManager::GameStepSnapshot StageManager::CaptureSnapshot() const
             ObjectSnapshot s;
             s.position = obj->GetPosition();
             s.angle = obj->GetAngle();
+            s.isActive = obj->IsActive();
+            if (obj->GetObjectType() == ObjectType2d::kRotatingFloor)
+            {
+                s.rotatingFloorType = static_cast<RotatingFloor*>(obj.get())->GetRotatingFloorType();
+            }
             if (obj->GetObjectType() == ObjectType2d::kPC)
             {
                 PC* pc = static_cast<PC*>(obj.get());
@@ -683,6 +745,7 @@ void StageManager::RestoreSnapshot(const GameStepSnapshot& snapshot)
             const auto& s = snapshot.objectSnapshots[i];
             obj->SetPosition(s.position);
             obj->SetAngle(s.angle);
+            obj->SetActive(s.isActive);
             obj->UpdateSpritePosition(tileSize_, mapOffset_);
 
             if (obj->GetObjectType() == ObjectType2d::kPlayer)
@@ -693,6 +756,10 @@ void StageManager::RestoreSnapshot(const GameStepSnapshot& snapshot)
             else if (obj->GetObjectType() == ObjectType2d::kRouter || obj->GetObjectType() == ObjectType2d::kRepeater)
             {
                 obj->ApplyRotationToSprite();
+            }
+            else if (obj->GetObjectType() == ObjectType2d::kRotatingFloor)
+            {
+                static_cast<RotatingFloor*>(obj.get())->SetRotatingFloorType(s.rotatingFloorType);
             }
             else
             {
@@ -830,7 +897,10 @@ void StageManager::MapEdit()
     else
     {
         ImGui::Text("Object Palette");
-        static const char* kObjectNames[] = { "Delete", "Player (Blue)", "Router (Yellow)", "Repeater (Green)", "AlumiWall (Gray)", "PC (Purple)" };
+        static const char* kObjectNames[] = {
+            "Delete", "Player (Blue)", "Router (Yellow)", "Repeater (Green)",
+            "AlumiWall (Gray)", "PC (Purple)", "RotatingFloor (R)", "RotatingFloor (L)"
+        };
         ImGui::Combo("Object Type", &selectedObjectType, kObjectNames, IM_ARRAYSIZE(kObjectNames));
 
         if (selectedObjectType == 2 || selectedObjectType == 3) // Router または Repeater の場合、向き設定を表示
@@ -865,11 +935,14 @@ void StageManager::MapEdit()
             {
                 switch (objAtPos->GetObjectType())
                 {
-                case ObjectType2d::kPlayer:    label = " P"; break;
-                case ObjectType2d::kRouter:    label = " R"; break;
-                case ObjectType2d::kRepeater:  label = " M"; break;
-                case ObjectType2d::kAlumiWall:label = " W"; break;
-                case ObjectType2d::kPC:       label = " C"; break;
+                case ObjectType2d::kPlayer:        label = " P"; break;
+                case ObjectType2d::kRouter:        label = " R"; break;
+                case ObjectType2d::kRepeater:      label = " M"; break;
+                case ObjectType2d::kAlumiWall:    label = " W"; break;
+                case ObjectType2d::kPC:           label = " C"; break;
+                case ObjectType2d::kRotatingFloor:
+                    label = (static_cast<RotatingFloor*>(objAtPos)->GetRotatingFloorType() == RotatingFloorType::kRight) ? "FR" : "FL";
+                    break;
                 default: label = " O"; break;
                 }
             }
@@ -924,31 +997,53 @@ void StageManager::MapEdit()
                 }
                 else // オブジェクト配置
                 {
-                    ObjectType2d targetObjType = static_cast<ObjectType2d>(selectedObjectType);
-                    if (targetObjType == ObjectType2d::None)
+                    if (selectedObjectType == 6)
                     {
-                        RemoveObjectAt({ x, y });
+                        CreateObject(ObjectType2d::kRotatingFloor, { x, y }, { 0, 1 }, RotatingFloorType::kRight);
+                    }
+                    else if (selectedObjectType == 7)
+                    {
+                        CreateObject(ObjectType2d::kRotatingFloor, { x, y }, { 0, 1 }, RotatingFloorType::kLeft);
                     }
                     else
                     {
-                        CreateObject(targetObjType, { x, y }, kDirVectors[selectedDirIdx]);
+                        ObjectType2d targetObjType = static_cast<ObjectType2d>(selectedObjectType);
+                        if (targetObjType == ObjectType2d::None)
+                        {
+                            RemoveObjectAt({ x, y });
+                        }
+                        else
+                        {
+                            CreateObject(targetObjType, { x, y }, kDirVectors[selectedDirIdx]);
+                        }
                     }
                     isMapEditedThisFrame = true;
                 }
             }
-            // 右クリックで既存オブジェクトの向きを時計回りに回転
+            // 右クリックで既存オブジェクトの向き・タイプを回転/切替
             else if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
             {
                 if (objAtPos)
                 {
-                    Vector2Int curDir = objAtPos->GetAngle();
-                    Vector2Int nextDir = { 0, 1 };
-                    if (curDir.x == 0 && curDir.y == -1) nextDir = { 1, 0 };      // 上 -> 右
-                    else if (curDir.x == 1 && curDir.y == 0) nextDir = { 0, 1 };  // 右 -> 下
-                    else if (curDir.x == 0 && curDir.y == 1) nextDir = { -1, 0 }; // 下 -> 左
-                    else if (curDir.x == -1 && curDir.y == 0) nextDir = { 0, -1 };// 左 -> 上
+                    if (objAtPos->GetObjectType() == ObjectType2d::kRotatingFloor)
+                    {
+                        RotatingFloor* rotFloor = static_cast<RotatingFloor*>(objAtPos);
+                        rotFloor->SetRotatingFloorType(
+                            rotFloor->GetRotatingFloorType() == RotatingFloorType::kRight ?
+                            RotatingFloorType::kLeft : RotatingFloorType::kRight
+                        );
+                    }
+                    else
+                    {
+                        Vector2Int curDir = objAtPos->GetAngle();
+                        Vector2Int nextDir = { 0, 1 };
+                        if (curDir.x == 0 && curDir.y == -1) nextDir = { 1, 0 };      // 上 -> 右
+                        else if (curDir.x == 1 && curDir.y == 0) nextDir = { 0, 1 };  // 右 -> 下
+                        else if (curDir.x == 0 && curDir.y == 1) nextDir = { -1, 0 }; // 下 -> 左
+                        else if (curDir.x == -1 && curDir.y == 0) nextDir = { 0, -1 };// 左 -> 上
 
-                    objAtPos->SetAngle(nextDir);
+                        objAtPos->SetAngle(nextDir);
+                    }
                     isMapEditedThisFrame = true;
                 }
             }
