@@ -17,8 +17,7 @@ void AlumiWall::Initialize()
 	isDynamic_ = true;
 
 	pSprite_ = std::make_unique<Sprite>();
-	pSprite_->Initialize(Path::Image::InGame::kTestTile);
-	pSprite_->SetColor({ 0.7f, 0.7f, 0.8f, 1.0f }); // 仮置き：灰色/銀色
+	pSprite_->Initialize(Path::Image::InGame::kAluminum);
 }
 
 void AlumiWall::Update()
