@@ -33,6 +33,18 @@ public:
     void Initialize();
 
     /// <summary>
+    /// ステージセレクト等から指定された読み込み対象ステージファイル名
+    /// </summary>
+    static void SetSelectedStageFileName(const std::string& fileName) { sSelectedStageFileName_ = fileName; }
+    static const std::string& GetSelectedStageFileName() { return sSelectedStageFileName_; }
+
+    /// <summary>
+    /// 直前にプレイしていた（現在滞在中の）ステージファイル名
+    /// </summary>
+    static void SetLastPlayedStageFileName(const std::string& fileName) { sLastPlayedStageFileName_ = fileName; }
+    static const std::string& GetLastPlayedStageFileName() { return sLastPlayedStageFileName_; }
+
+    /// <summary>
     /// 更新 (入力、オブジェクト挙動、電波計算、Undo/Reset、エディタ)
     /// </summary>
     /// <param name="pInput">入力インスタンス</param>
@@ -264,4 +276,7 @@ private:
 
     bool isEditorEnabled_ = true; // !< エディタ表示フラグ
     EditorState editorState_ = EditorState::Play; // !< エディタ状態 (Play / Edit)
+
+    inline static std::string sSelectedStageFileName_ = "";
+    inline static std::string sLastPlayedStageFileName_ = "stage1_1.json";
 };

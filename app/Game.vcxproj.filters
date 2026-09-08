@@ -67,6 +67,9 @@
     </ClCompile>
     <ClCompile Include="src\presentation\ui\InGameUI.cpp" />
     <ClCompile Include="src\object\rotatingFloor\RotatingFloor.cpp" />
+    <ClCompile Include="src\scene\select\SelectScene.cpp">
+      <Filter>src\scene\select</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -89,6 +92,9 @@
     </Filter>
     <Filter Include="src\scene">
       <UniqueIdentifier>{97236c83-21d3-47b9-be08-8d2191766d43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\scene\select">
+      <UniqueIdentifier>{a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\screen">
       <UniqueIdentifier>{8876c19e-fd40-4c31-b9a3-6830767f4196}</UniqueIdentifier>
@@ -232,5 +238,8 @@
     </ClInclude>
     <ClInclude Include="src\presentation\ui\InGameUI.h" />
     <ClInclude Include="src\object\rotatingFloor\RotatingFloor.h" />
+    <ClInclude Include="src\scene\select\SelectScene.h">
+      <Filter>src\scene\select</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -52,8 +52,10 @@
     <ClCompile Include="src\presentation\ui\TimeUpMenu.cpp" />
     <ClCompile Include="src\stage\StageManager.cpp" />
     <ClCompile Include="src\wrapper\InputAwareSprite.cpp" />
+    <ClCompile Include="src\scene\select\SelectScene.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\scene\select\SelectScene.h" />
     <ClInclude Include="src\object\rotatingFloor\RotatingFloor.h" />
     <ClInclude Include="src\presentation\ui\InGameUI.h" />
     <ClInclude Include="src\presentation\ui\PauseMenu.h" />

@@ -26,37 +26,53 @@ void StageManager::Initialize()
     tm->LoadTexture(Path::Image::InGame::kTile);
     tm->LoadTexture(Path::Image::InGame::kTestTile);
 
-    // マップファイル一覧の取得と初期マップの読み込み (stage1_1.json を最優先)
+    // マップファイル一覧の取得と初期マップの読み込み
     RefreshMapFileList();
     std::string initialMap = "stage1_1.json";
-    bool hasInitialMap = false;
-    for (const auto& file : mapFileList_)
-    {
-        if (file == "stage1_1.json")
-        {
-            hasInitialMap = true;
-            break;
-        }
-    }
 
-    if (!hasInitialMap)
+    // セレクトシーン等でステージが明示的に指定されている場合はそれを最優先
+    if (!sSelectedStageFileName_.empty())
     {
+        initialMap = sSelectedStageFileName_;
+        sSelectedStageFileName_.clear(); // 1回消費したらクリア
+    }
+    else if (!sLastPlayedStageFileName_.empty())
+    {
+        initialMap = sLastPlayedStageFileName_;
+    }
+    else
+    {
+        bool hasInitialMap = false;
         for (const auto& file : mapFileList_)
         {
-            if (file == "test_map.json")
+            if (file == "stage1_1.json")
             {
-                initialMap = "test_map.json";
                 hasInitialMap = true;
                 break;
             }
         }
+
+        if (!hasInitialMap)
+        {
+            for (const auto& file : mapFileList_)
+            {
+                if (file == "test_map.json")
+                {
+                    initialMap = "test_map.json";
+                    hasInitialMap = true;
+                    break;
+                }
+            }
+        }
+
+        if (!hasInitialMap && !mapFileList_.empty())
+        {
+            initialMap = mapFileList_[0];
+        }
     }
 
-    if (!hasInitialMap && !mapFileList_.empty())
-    {
-        initialMap = mapFileList_[0];
-    }
     currentLoadedMapFile_ = initialMap;
+    sLastPlayedStageFileName_ = initialMap;
     MapLoad(initialMap);
 
     // スプライトの初期化
@@ -758,6 +774,7 @@ void StageManager::CreateNewMap(const std::string& fileName, int width, int heig
 void StageManager::LoadMap(const std::string& fileName)
 {
     currentLoadedMapFile_ = fileName;
+    sLastPlayedStageFileName_ = fileName;
     MapLoad(fileName);
 
     pSpriteTile_.clear();
@@ -794,19 +811,20 @@ std::string StageManager::GetNextStageFileName() const
     int stage = 0;
     if (ParseStageFileName(currentLoadedMapFile_, world, stage))
     {
-        int nextWorld = world;
-        int nextStage = stage + 1;
-        if (nextStage > 4)
+        // 1. 同一ワールド内の次のステージ (stage{world}_{stage+1}.json)
+        std::string nextInSameWorld = "stage" + std::to_string(world) + "_" + std::to_string(stage + 1) + ".json";
+        std::string path1 = std::string(Path::Resource::kJsonDir) + Path::Json::kMapDir + nextInSameWorld;
+        if (std::filesystem::exists(path1))
         {
-            nextWorld = world + 1;
-            nextStage = 1;
+            return nextInSameWorld;
         }
 
-        std::string nextFileName = "stage" + std::to_string(nextWorld) + "_" + std::to_string(nextStage) + ".json";
-        std::string fullPath = std::string(Path::Resource::kJsonDir) + Path::Json::kMapDir + nextFileName;
-        if (std::filesystem::exists(fullPath))
+        // 2. 次のワールドの第1ステージ (stage{world+1}_1.json)
+        std::string nextInNextWorld = "stage" + std::to_string(world + 1) + "_1.json";
+        std::string path2 = std::string(Path::Resource::kJsonDir) + Path::Json::kMapDir + nextInNextWorld;
+        if (std::filesystem::exists(path2))
         {
-            return nextFileName;
+            return nextInNextWorld;
         }
     }
     else

@@ -149,7 +149,12 @@ void GameScene::Update()
             }
             else if (action == PauseMenuAction::StageSelect)
             {
-                // ステージセレクトへ (現在は未実装の仮配置のため通知/待機)
+                // ステージセレクトへ遷移
+                isChangingScene_ = true;
+                isPaused_ = false;
+                pPauseMenu_->Close();
+                pSceneManager_->ReserveScene("SelectScene", std::make_unique<TransShutter>());
+                return;
             }
             else if (action == PauseMenuAction::Title)
             {
@@ -192,7 +197,12 @@ void GameScene::Update()
             }
             else if (action == ResultMenuAction::StageSelect)
             {
-                // ステージセレクトへ (現在は未実装の仮配置のため通知/待機)
+                // ステージセレクトへ遷移
+                isChangingScene_ = true;
+                isResult_ = false;
+                pResultMenu_->Close();
+                pSceneManager_->ReserveScene("SelectScene", std::make_unique<TransShutter>());
+                return;
             }
             else if (action == ResultMenuAction::Title)
             {
@@ -225,7 +235,12 @@ void GameScene::Update()
             }
             else if (action == TimeUpMenuAction::StageSelect)
             {
-                // ステージセレクトへ (現在は未実装の仮配置のため通知/待機)
+                // ステージセレクトへ遷移
+                isChangingScene_ = true;
+                isTimeUp_ = false;
+                pTimeUpMenu_->Close();
+                pSceneManager_->ReserveScene("SelectScene", std::make_unique<TransShutter>());
+                return;
             }
             else if (action == TimeUpMenuAction::Title)
             {
