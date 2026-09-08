@@ -47,6 +47,29 @@ std::unique_ptr<ILoadableScene> SceneFactory::CreateLoadable(const std::string& 
     return nullptr;
 }
 
+size_t SceneFactory::GetSceneCount() const
+{
+    return sceneCreators_.size() + loadableSceneCreators_.size();
+}
+
+std::vector<std::string> SceneFactory::GetSceneNames()
+{
+    if (sceneNames_.size() != GetSceneCount())
+    {
+        sceneNames_.clear();
+        for (const auto& [name, _] : sceneCreators_)
+        {
+            sceneNames_.push_back(name);
+        }
+        for (const auto& [name, _] : loadableSceneCreators_)
+        {
+            sceneNames_.push_back(name);
+        }
+    }
+
+    return sceneNames_;
+}
+
 void SceneFactory::OutputSceneMissingError(const std::string& sceneName)
 {
     Logger::GetInstance()->LogError(
