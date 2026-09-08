@@ -1,4 +1,4 @@
-#include "ResultMenu.h"
+#include "TimeUpMenu.h"
 #include <Core/Window/Window.h>
 #include <Core/DirectX12/TextureManager.h>
 #include <config/ResourcePath.h>
@@ -8,32 +8,32 @@
 #include <algorithm>
 #include <string>
 
-ResultMenu::ResultMenu()
+TimeUpMenu::TimeUpMenu()
 {
 }
 
-ResultMenu::~ResultMenu()
+TimeUpMenu::~TimeUpMenu()
 {
 }
 
-void ResultMenu::Initialize()
+void TimeUpMenu::Initialize()
 {
     TextureManager* tm = TextureManager::GetInstance();
     tm->LoadTexture(Path::Image::InGame::kTestTile); // game/tile/Simple.png をロード
 
-    // 1. 全画面半透明オーバーレイ
+    // 1. 全画面半透明オーバーレイ (時間切れの緊張感とドラマチックさを醸し出す赤みがかった暗幕)
     pOverlaySprite_ = std::make_unique<Sprite>();
     pOverlaySprite_->Initialize(Path::Image::InGame::kTestTile);
     pOverlaySprite_->SetAnchorPoint({ 0.5f, 0.5f });
-    pOverlaySprite_->SetColor({ 0.0f, 0.0f, 0.0f, 0.68f });
+    pOverlaySprite_->SetColor({ 0.12f, 0.02f, 0.03f, 0.72f });
 
-    // 2. メニューパネル背景
+    // 2. メニューパネル背景 (深みのあるダーククリムゾン/ワインレッド調)
     pPanelSprite_ = std::make_unique<Sprite>();
     pPanelSprite_->Initialize(Path::Image::InGame::kTestTile);
     pPanelSprite_->SetAnchorPoint({ 0.5f, 0.5f });
-    pPanelSprite_->SetColor({ 0.09f, 0.14f, 0.17f, 0.94f });
+    pPanelSprite_->SetColor({ 0.16f, 0.07f, 0.09f, 0.95f });
 
-    // 3. メニューボタン (Simple.png による代用仮配置)
+    // 3. メニューボタン
     for (int i = 0; i < kItemCount; ++i)
     {
         pButtonSprites_[i] = std::make_unique<Sprite>();
@@ -45,87 +45,83 @@ void ResultMenu::Initialize()
     pCursorSprite_ = std::make_unique<Sprite>();
     pCursorSprite_->Initialize(Path::Image::InGame::kTestTile);
     pCursorSprite_->SetAnchorPoint({ 0.5f, 0.5f });
-    pCursorSprite_->SetColor({ 1.0f, 1.0f, 1.0f, 0.95f });
+    pCursorSprite_->SetColor({ 1.0f, 0.9f, 0.7f, 0.95f });
 
-    // 5. クリアテキスト
-    pClearSprite_ = std::make_unique<Sprite>();
-    pClearSprite_->Initialize(Path::Image::InGame::kClearText);
-    pClearSprite_->SetAnchorPoint({ 0.5f, 0.5f });
-    pClearSprite_->SetColor({ 1.0f, 1.0f, 1.0f, 1.0f });
-
-    selectedIndex_ = kNextStage;
+    selectedIndex_ = kRetry;
     isOpen_ = false;
-    currentAction_ = ResultMenuAction::None;
+    currentAction_ = TimeUpMenuAction::None;
     animTimer_ = 0.0f;
 
     UpdateLayout();
 }
 
-void ResultMenu::Open()
+void TimeUpMenu::Open()
 {
     isOpen_ = true;
-    selectedIndex_ = kNextStage; // 開いた時は一番上の「次のステージへ」を選択
-    currentAction_ = ResultMenuAction::None;
+    selectedIndex_ = kRetry; // 開いた時は一番上の「リトライ」を選択
+    currentAction_ = TimeUpMenuAction::None;
     animTimer_ = 0.0f;
     UpdateLayout();
 }
 
-void ResultMenu::Close()
+void TimeUpMenu::Close()
 {
     isOpen_ = false;
-    currentAction_ = ResultMenuAction::None;
+    currentAction_ = TimeUpMenuAction::None;
 }
 
-ResultMenuAction ResultMenu::ConsumeAction()
+TimeUpMenuAction TimeUpMenu::ConsumeAction()
 {
-    ResultMenuAction action = currentAction_;
-    currentAction_ = ResultMenuAction::None;
+    TimeUpMenuAction action = currentAction_;
+    currentAction_ = TimeUpMenuAction::None;
     return action;
 }
 
-void ResultMenu::TriggerActionByIndex(int index)
+void TimeUpMenu::TriggerActionByIndex(int index)
 {
     switch (index)
     {
-    case kNextStage:
-        currentAction_ = hasNextStage_ ? ResultMenuAction::NextStage : ResultMenuAction::Title;
+    case kRetry:
+        currentAction_ = TimeUpMenuAction::Retry;
         break;
     case kStageSelect:
-        currentAction_ = ResultMenuAction::StageSelect;
+        currentAction_ = TimeUpMenuAction::StageSelect;
         break;
     case kTitle:
-        currentAction_ = ResultMenuAction::Title;
+        currentAction_ = TimeUpMenuAction::Title;
         break;
     default:
         break;
     }
 }
 
-void ResultMenu::Update(Input* pInput)
+void TimeUpMenu::Update(Input* pInput)
 {
     if (!isOpen_)
     {
         return;
     }
 
-    animTimer_ += 0.05f;
+    animTimer_ += 0.03f;
 
     if (pInput)
     {
-        // 1. キーボード移動 (↑ 矢印キー または W キー)
-        if (pInput->TriggerKey(DIK_UP) || pInput->TriggerKey(DIK_W))
+        // 1. キーボード移動 (W/S または 上下矢印)
+        bool moveUp = pInput->TriggerKey(DIK_UP) || pInput->TriggerKey(DIK_W);
+        bool moveDown = pInput->TriggerKey(DIK_DOWN) || pInput->TriggerKey(DIK_S);
+
+        if (moveUp)
         {
-            selectedIndex_ = (selectedIndex_ + kItemCount - 1) % kItemCount;
+            selectedIndex_ = (selectedIndex_ - 1 + kItemCount) % kItemCount;
         }
-        // 下移動 (↓ 矢印キー または S キー)
-        else if (pInput->TriggerKey(DIK_DOWN) || pInput->TriggerKey(DIK_S))
+        if (moveDown)
         {
             selectedIndex_ = (selectedIndex_ + 1) % kItemCount;
         }
 
         // 2. マウスホバー & クリック判定
-        float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
-        float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 720);
+        float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1600);
+        float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 900);
         Vector2 center = { screenW * 0.5f, screenH * 0.5f };
 
         const float baseBtnW = 380.0f;
@@ -172,10 +168,10 @@ void ResultMenu::Update(Input* pInput)
     UpdateLayout();
 }
 
-void ResultMenu::UpdateLayout()
+void TimeUpMenu::UpdateLayout()
 {
-    float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
-    float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 720);
+    float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1600);
+    float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 900);
     Vector2 center = { screenW * 0.5f, screenH * 0.5f };
 
     // 1. 全画面暗幕
@@ -204,15 +200,15 @@ void ResultMenu::UpdateLayout()
 
     // カラーパレット定義 (非選択 / 選択中ハイライト)
     static const Vector4 kNormalColors[kItemCount] = {
-        { 0.18f, 0.44f, 0.28f, 0.85f }, // 1. 次のステージへ (グリーン系)
-        { 0.38f, 0.34f, 0.18f, 0.85f }, // 2. ステージセレクトへ (ゴールド系)
-        { 0.44f, 0.20f, 0.20f, 0.85f }  // 3. タイトルへ (赤系)
+        { 0.40f, 0.22f, 0.10f, 0.85f }, // 1. リトライ (アンバー・ウォームブラウン)
+        { 0.15f, 0.25f, 0.38f, 0.85f }, // 2. ステージセレクトへ (ディープスレートブルー)
+        { 0.38f, 0.15f, 0.18f, 0.85f }  // 3. タイトルへ (ディープクリムゾン)
     };
 
     static const Vector4 kHighlightColors[kItemCount] = {
-        { 0.25f, 0.95f, 0.45f, 1.0f },  // 1. 次のステージへ (発光エメラルドグリーン)
-        { 1.00f, 0.84f, 0.25f, 1.0f },  // 2. ステージセレクトへ (発光イエローゴールド)
-        { 1.00f, 0.36f, 0.32f, 1.0f }   // 3. タイトルへ (発光コーラルレッド)
+        { 1.00f, 0.65f, 0.15f, 1.0f },  // 1. リトライ (ネオンアンバー・ゴールド)
+        { 0.35f, 0.78f, 1.00f, 1.0f },  // 2. ステージセレクトへ (ネオンシアン)
+        { 1.00f, 0.35f, 0.38f, 1.0f }   // 3. タイトルへ (ネオンコーラルレッド)
     };
 
     for (int i = 0; i < kItemCount; ++i)
@@ -249,7 +245,7 @@ void ResultMenu::UpdateLayout()
     }
 }
 
-void ResultMenu::Draw()
+void TimeUpMenu::Draw()
 {
     if (!isOpen_)
     {
@@ -283,27 +279,15 @@ void ResultMenu::Draw()
         pCursorSprite_->Draw1F();
     }
 
-	// 5. クリアテキスト
-	if (pClearSprite_)
-	{
-		float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
-		float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 720);
-		Vector2 center = { screenW * 0.5f, screenH * 0.5f };
-		Vector2 clearPos = { center.x, center.y - 300.0f };
-		pClearSprite_->SetPosition(clearPos);
-		pClearSprite_->Update();
-		pClearSprite_->Draw1F();
-	}
-
-    // 6. テキストラベル補助表示 (ImGui)
+    // 5. テキストラベル補助表示 (ImGui)
     DrawOverlayUI();
 }
 
-void ResultMenu::DrawOverlayUI()
+void TimeUpMenu::DrawOverlayUI()
 {
 #ifdef _DEBUG
-    float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
-    float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 720);
+    float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1600);
+    float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 900);
     Vector2 center = { screenW * 0.5f, screenH * 0.5f };
 
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration |
@@ -315,31 +299,26 @@ void ResultMenu::DrawOverlayUI()
                              ImGuiWindowFlags_NoMove;
 
     ImGui::SetNextWindowPos(ImVec2(center.x, center.y - 170.0f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-    if (ImGui::Begin("##ResultHeaderUI", nullptr, flags))
+    if (ImGui::Begin("##TimeUpHeaderUI", nullptr, flags))
     {
         if (!stageTitle_.empty())
         {
             ImGui::SetWindowFontScale(1.2f);
-            ImGui::TextColored(ImVec4(0.8f, 0.9f, 1.0f, 0.9f), "%s", stageTitle_.c_str());
+            ImGui::TextColored(ImVec4(0.9f, 0.8f, 0.8f, 0.9f), "%s", stageTitle_.c_str());
             ImGui::SetWindowFontScale(1.0f);
         }
 
         ImGui::SetWindowFontScale(1.8f);
-        if (hasNextStage_)
-        {
-            ImGui::TextColored(ImVec4(0.3f, 1.0f, 0.5f, 0.95f), "S T A G E   C L E A R !");
-        }
-        else
-        {
-            ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.25f, 0.95f), "A L L   S T A G E S   C L E A R E D !");
-        }
+        ImGui::TextColored(ImVec4(1.0f, 0.28f, 0.28f, 0.98f), "T I M E   U P !");
         ImGui::SetWindowFontScale(1.0f);
+
+        ImGui::SetWindowFontScale(1.0f);
+        ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.4f, 0.85f), "30 seconds deadline reached!");
         ImGui::End();
     }
 
-    std::string nextStageLabel = hasNextStage_ ? "1. Next Stage" : "1. Return to Title (Game Complete!)";
     const char* kItemLabels[kItemCount] = {
-        nextStageLabel.c_str(),
+        "1. Retry ( Try Again )",
         "2. Stage Select ( Coming Soon )",
         "3. Title ( Return to Title )"
     };
@@ -350,7 +329,7 @@ void ResultMenu::DrawOverlayUI()
     for (int i = 0; i < kItemCount; ++i)
     {
         ImGui::SetNextWindowPos(ImVec2(center.x, startY + static_cast<float>(i) * btnSpacing), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-        std::string winName = "##ResultBtnText" + std::to_string(i);
+        std::string winName = "##TimeUpBtnText" + std::to_string(i);
         if (ImGui::Begin(winName.c_str(), nullptr, flags))
         {
             if (i == selectedIndex_)
@@ -382,9 +361,9 @@ void ResultMenu::DrawOverlayUI()
 
     // 操作ガイド表示
     ImGui::SetNextWindowPos(ImVec2(center.x, center.y + 155.0f), ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-    if (ImGui::Begin("##ResultFooterGuideUI", nullptr, flags))
+    if (ImGui::Begin("##TimeUpFooterGuideUI", nullptr, flags))
     {
-        ImGui::TextColored(ImVec4(0.7f, 0.85f, 0.75f, 0.9f),
+        ImGui::TextColored(ImVec4(0.85f, 0.75f, 0.75f, 0.9f),
             "[ Up / Down or W / S ]: Move    [ Space / Enter / Click ]: Select");
         ImGui::End();
     }

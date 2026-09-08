@@ -30,6 +30,7 @@ void BaseObject2d::Move(const Vector2Int& delta)
 
 void BaseObject2d::UpdateSpritePosition(float tileSize, const Vector2& mapOffset)
 {
+	size_ = { tileSize, tileSize };
 	Vector2 calcPos = {
 		tileSize / 2.0f + tileSize * position_.x + mapOffset.x,
 		tileSize / 2.0f + tileSize * position_.y + mapOffset.y

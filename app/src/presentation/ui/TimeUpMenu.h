@@ -6,34 +6,35 @@
 #include <Features/Input/Input.h>
 #include <Vector2.h>
 #include <Vector4.h>
+#include <string>
 
 /// <summary>
-/// リザルトメニューで実行されたアクション
+/// タイムアップ (時間切れ) メニューで実行されたアクション
 /// </summary>
-enum class ResultMenuAction
+enum class TimeUpMenuAction
 {
     None,        // アクションなし
-    NextStage,   // 次のステージへ
-    StageSelect, // ステージセレクトへ
+    Retry,       // リトライ (現在のステージを再開)
+    StageSelect, // セレクトへ (ステージセレクトへ)
     Title        // タイトル画面へ
 };
 
 /// <summary>
-/// リザルトメニューUIクラス (PauseMenuを参考に作成)
+/// タイムアップ (時間切れ) メニューUIクラス
 /// </summary>
-class ResultMenu
+class TimeUpMenu
 {
 public:
     enum MenuItem
     {
-        kNextStage = 0,   // 1. 次のステージへ
-        kStageSelect = 1, // 2. ステージセレクトへ
+        kRetry = 0,       // 1. リトライ
+        kStageSelect = 1, // 2. セレクトへ
         kTitle = 2,       // 3. タイトルへ
         kItemCount = 3
     };
 
-    ResultMenu();
-    ~ResultMenu();
+    TimeUpMenu();
+    ~TimeUpMenu();
 
     /// <summary>
     /// 初期化 (スプライトの生成と初期レイアウト設定)
@@ -52,12 +53,12 @@ public:
     void Draw();
 
     /// <summary>
-    /// リザルトメニューを開く
+    /// タイムアップメニューを開く
     /// </summary>
     void Open();
 
     /// <summary>
-    /// リザルトメニューを閉じる
+    /// タイムアップメニューを閉じる
     /// </summary>
     void Close();
 
@@ -67,19 +68,14 @@ public:
     bool IsOpen() const { return isOpen_; }
 
     /// <summary>
-    /// 次のステージが存在するかどうかを設定
-    /// </summary>
-    void SetHasNextStage(bool hasNext) { hasNextStage_ = hasNext; }
-
-    /// <summary>
-    /// クリアしたステージのタイトルを設定
+    /// ステージタイトルを設定
     /// </summary>
     void SetStageTitle(const std::string& title) { stageTitle_ = title; }
 
     /// <summary>
     /// 決定されたアクションを取得し、内部状態をリセットする
     /// </summary>
-    ResultMenuAction ConsumeAction();
+    TimeUpMenuAction ConsumeAction();
 
 private:
     void UpdateLayout();
@@ -88,16 +84,14 @@ private:
 
 private:
     bool isOpen_ = false;
-    bool hasNextStage_ = true;
     std::string stageTitle_ = "";
     int selectedIndex_ = 0;
-    ResultMenuAction currentAction_ = ResultMenuAction::None;
+    TimeUpMenuAction currentAction_ = TimeUpMenuAction::None;
 
     std::unique_ptr<Sprite> pOverlaySprite_ = nullptr; // !< 画面全体の半透明暗幕
     std::unique_ptr<Sprite> pPanelSprite_ = nullptr;   // !< メニュー中央のパネル背景
     std::array<std::unique_ptr<Sprite>, kItemCount> pButtonSprites_{}; // !< 各ボタン
     std::unique_ptr<Sprite> pCursorSprite_ = nullptr;  // !< 選択中ボタンのカーソルバー
-	std::unique_ptr<Sprite> pClearSprite_ = nullptr;   // !< クリアテキスト
 
     float animTimer_ = 0.0f; // !< 選択中ボタンのパルス・アニメーションタイマー
 };

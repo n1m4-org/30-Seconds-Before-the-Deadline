@@ -56,6 +56,9 @@
     <ClCompile Include="src\presentation\ui\ResultMenu.cpp">
       <Filter>src\presentation\ui</Filter>
     </ClCompile>
+    <ClCompile Include="src\presentation\ui\TimeUpMenu.cpp">
+      <Filter>src\presentation\ui</Filter>
+    </ClCompile>
     <ClCompile Include="src\stage\StageManager.cpp">
       <Filter>src\stage</Filter>
     </ClCompile>
@@ -156,6 +159,9 @@
       <Filter>src\presentation\ui</Filter>
     </ClInclude>
     <ClInclude Include="src\presentation\ui\ResultMenu.h">
+      <Filter>src\presentation\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\presentation\ui\TimeUpMenu.h">
       <Filter>src\presentation\ui</Filter>
     </ClInclude>
     <ClInclude Include="src\stage\StageManager.h">

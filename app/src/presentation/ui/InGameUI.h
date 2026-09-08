@@ -19,7 +19,8 @@ public:
     /// 更新
     /// </summary>
     /// <param name="progress">pcへのデータ送信進捗</param>
-    void Update(float progress);
+    /// <param name="remainingTime">ステージの残り制限時間(秒)</param>
+    void Update(float progress, float remainingTime);
 
     /// <summary>
     /// 描画
@@ -39,8 +40,12 @@ private:
 	};
 	std::array<std::unique_ptr<Sprite>, kSpriteCount> pUISprites_; // !< UIスプライト
 
+	std::unique_ptr<Sprite> pTimerTens_ = nullptr; // !< 制限時間(十の位)
+	std::unique_ptr<Sprite> pTimerOnes_ = nullptr; // !< 制限時間(一の位)
+
 	float barWidth_ = 400.0f; // 進捗バーの最大幅
 
 	float progress_ = 0.0f; // pcへのデータ送信進捗
+	float remainingTime_ = 30.0f; // 残り制限時間
 };
 

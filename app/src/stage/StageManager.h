@@ -79,6 +79,32 @@ public:
     int GetPcReceivedStrength() const { return pcReceivedStrength_; }
 
     /// <summary>
+    /// ステージ制限時間の基準値 (30秒固定)
+    /// </summary>
+    static constexpr float kDefaultTimeLimit = 30.0f;
+
+    /// <summary>
+    /// 残り制限時間を取得 (秒)
+    /// </summary>
+    float GetRemainingTime() const { return remainingTime_; }
+
+    /// <summary>
+    /// 残り制限時間を設定 (秒)
+    /// </summary>
+    void SetRemainingTime(float time) { remainingTime_ = time; }
+
+    /// <summary>
+    /// 制限時間がタイムアップしたかどうか (Playモード時のみ判定)
+    /// </summary>
+    bool IsTimeUp() const { return (editorState_ == EditorState::Play) && (remainingTime_ <= 0.0f); }
+
+    /// <summary>
+    /// 制限時間タイマーの有効/無効
+    /// </summary>
+    void SetTimeLimitEnabled(bool enabled) { isTimeLimitEnabled_ = enabled; }
+    bool IsTimeLimitEnabled() const { return isTimeLimitEnabled_; }
+
+    /// <summary>
     /// マップの描画オフセット設定・取得
     /// </summary>
     void SetMapOffset(const Vector2& offset) { mapOffset_ = offset; }
@@ -91,10 +117,65 @@ public:
     float GetTileSize() const { return tileSize_; }
 
     /// <summary>
+    /// エディタ状態 (Play: テストプレイ / Edit: マップ編集)
+    /// </summary>
+    enum class EditorState
+    {
+        Play, // プレイモード (ゲームプレイ実行・操作・タイマー動作)
+        Edit  // エディットモード (マップ編集・操作およびタイマー停止)
+    };
+
+    /// <summary>
+    /// エディタ状態の設定・取得
+    /// </summary>
+    void SetEditorState(EditorState state);
+    EditorState GetEditorState() const { return editorState_; }
+    bool IsPlayMode() const { return editorState_ == EditorState::Play; }
+    bool IsEditMode() const { return editorState_ == EditorState::Edit; }
+    void ToggleEditorState();
+
+    /// <summary>
     /// ImGuiエディタの有効/無効
     /// </summary>
     void SetEditorEnabled(bool enabled) { isEditorEnabled_ = enabled; }
     bool IsEditorEnabled() const { return isEditorEnabled_; }
+
+    /// <summary>
+    /// 現在読み込み中のマップファイル名を取得
+    /// </summary>
+    const std::string& GetCurrentLoadedMapFile() const { return currentLoadedMapFile_; }
+
+    /// <summary>
+    /// ステージファイル名 (stageW_S.json) をパースしてワールド番号・ステージ番号を取得
+    /// </summary>
+    bool ParseStageFileName(const std::string& fileName, int& outWorld, int& outStage) const;
+
+    /// <summary>
+    /// 次のステージファイル名を取得 (存在しない場合は空文字)
+    /// </summary>
+    std::string GetNextStageFileName() const;
+
+    /// <summary>
+    /// 次のステージが存在するかどうか
+    /// </summary>
+    bool HasNextStage() const;
+
+    /// <summary>
+    /// 次のステージへ進む
+    /// </summary>
+    /// <returns>次のステージが存在して読み込みに成功したか</returns>
+    bool LoadNextStage();
+
+    /// <summary>
+    /// 現在のステージの表示名 (例: "STAGE 1-1") を取得
+    /// </summary>
+    std::string GetCurrentStageDisplayName() const;
+
+    /// <summary>
+    /// マップサイズ (幅・高さ) に合わせて画面中央 (900x900領域) に綺麗に収まるよう
+    /// タイルサイズと描画オフセットを自動計算・更新する
+    /// </summary>
+    void UpdateLayoutForMapSize();
 
 private:
     void InitializeSprites();
@@ -172,10 +253,15 @@ private:
     int mapWidth_ = 9;      // !< マップの幅
     int mapHeight_ = 9;      // !< マップの高さ
 
+    // 制限時間 (30秒固定)
+    float remainingTime_ = kDefaultTimeLimit; // !< 残り制限時間 (秒)
+    bool isTimeLimitEnabled_ = true;          // !< 制限時間タイマー有効フラグ
+
     MapCollision mapCollision_; // !< 衝突・押し出し判定
     SignalSystem signalSystem_; // !< 電波伝搬システム
 
     JSONIO* pJSONIO_ = nullptr; // !< JSONIO
 
     bool isEditorEnabled_ = true; // !< エディタ表示フラグ
+    EditorState editorState_ = EditorState::Play; // !< エディタ状態 (Play / Edit)
 };

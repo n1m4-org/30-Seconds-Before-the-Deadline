@@ -66,13 +66,19 @@ void GameScene::Initialize()
     pResultMenu_ = std::make_unique<ResultMenu>();
     pResultMenu_->Initialize();
 
+    // タイムアップメニューの初期化
+    pTimeUpMenu_ = std::make_unique<TimeUpMenu>();
+    pTimeUpMenu_->Initialize();
+
     isPaused_ = false;
     isResult_ = false;
+    isTimeUp_ = false;
     isChangingScene_ = false;
 }
 
 void GameScene::Finalize()
 {
+    pTimeUpMenu_.reset();
     pResultMenu_.reset();
     pPauseMenu_.reset();
     pStageManager_.reset();
@@ -95,8 +101,8 @@ void GameScene::Update()
         return;
     }
 
-    // Escキーによるポーズメニューの開閉トグル (リザルト中以外)
-    if (pInput_ && !ImGui::GetIO().WantCaptureKeyboard && !isResult_)
+    // Escキーによるポーズメニューの開閉トグル (リザルト中・タイムアップ中以外)
+    if (pInput_ && !ImGui::GetIO().WantCaptureKeyboard && !isResult_ && !isTimeUp_)
     {
         if (pInput_->TriggerKey(DIK_ESCAPE))
         {
@@ -109,6 +115,21 @@ void GameScene::Update()
             {
                 pPauseMenu_->Close();
             }
+        }
+    }
+
+    // エディットモード時はリザルトやタイムアップ画面を自動で閉じる
+    if (pStageManager_ && pStageManager_->IsEditMode())
+    {
+        if (isResult_)
+        {
+            isResult_ = false;
+            if (pResultMenu_) pResultMenu_->Close();
+        }
+        if (isTimeUp_)
+        {
+            isTimeUp_ = false;
+            if (pTimeUpMenu_) pTimeUpMenu_->Close();
         }
     }
 
@@ -151,12 +172,22 @@ void GameScene::Update()
             ResultMenuAction action = pResultMenu_->ConsumeAction();
             if (action == ResultMenuAction::NextStage)
             {
-                // 次のステージへ (ステージのリセットおよびリザルト閉じる)
+                // 次のステージへ進む (リザルトを閉じる)
                 isResult_ = false;
                 pResultMenu_->Close();
                 if (pStageManager_)
                 {
-                    pStageManager_->ResetStage();
+                    if (pStageManager_->HasNextStage())
+                    {
+                        pStageManager_->LoadNextStage();
+                    }
+                    else
+                    {
+                        // 次のステージが存在しない (全ステージクリア) 場合はタイトルへ遷移
+                        isChangingScene_ = true;
+                        pSceneManager_->ReserveScene("TitleScene", std::make_unique<TransShutter>());
+                        return;
+                    }
                 }
             }
             else if (action == ResultMenuAction::StageSelect)
@@ -174,21 +205,66 @@ void GameScene::Update()
             }
         }
     }
-    // 3. 通常プレイ時の更新処理 (ステージ更新)
+    // 3. タイムアップ (時間切れ) 中の更新処理
+    else if (isTimeUp_)
+    {
+        if (pTimeUpMenu_)
+        {
+            pTimeUpMenu_->Update(pInput_);
+
+            TimeUpMenuAction action = pTimeUpMenu_->ConsumeAction();
+            if (action == TimeUpMenuAction::Retry)
+            {
+                // リトライ: ステージを初期状態にリセットしてゲーム再開
+                isTimeUp_ = false;
+                pTimeUpMenu_->Close();
+                if (pStageManager_)
+                {
+                    pStageManager_->ResetStage();
+                }
+            }
+            else if (action == TimeUpMenuAction::StageSelect)
+            {
+                // ステージセレクトへ (現在は未実装の仮配置のため通知/待機)
+            }
+            else if (action == TimeUpMenuAction::Title)
+            {
+                // タイトルへ (シャッタートランジション付きで遷移)
+                isChangingScene_ = true;
+                isTimeUp_ = false;
+                pTimeUpMenu_->Close();
+                pSceneManager_->ReserveScene("TitleScene", std::make_unique<TransShutter>());
+                return;
+            }
+        }
+    }
+    // 4. 通常プレイ時 / エディットモード時の更新処理 (ステージ更新)
     else
     {
         if (pStageManager_)
         {
             pStageManager_->Update(pInput_);
-            pInGameUI_->Update(pStageManager_->GetPcDataProgress());
+            pInGameUI_->Update(pStageManager_->GetPcDataProgress(), pStageManager_->GetRemainingTime());
 
-            // ステージクリア時の処理
+            // ステージクリア時の処理 (Playモード時のみ)
             if (pStageManager_->IsCleared())
             {
                 isResult_ = true;
                 if (pResultMenu_)
                 {
+                    pResultMenu_->SetHasNextStage(pStageManager_->HasNextStage());
+                    pResultMenu_->SetStageTitle(pStageManager_->GetCurrentStageDisplayName() + " CLEARED!");
                     pResultMenu_->Open();
+                }
+            }
+            // 制限時間切れ (タイムアップ) 時の処理 (Playモード時のみ)
+            else if (pStageManager_->IsTimeUp())
+            {
+                isTimeUp_ = true;
+                if (pTimeUpMenu_)
+                {
+                    pTimeUpMenu_->SetStageTitle(pStageManager_->GetCurrentStageDisplayName());
+                    pTimeUpMenu_->Open();
                 }
             }
         }
@@ -213,16 +289,22 @@ void GameScene::Draw()
         pInGameUI_->Draw();
     }
 
-    // 3. ポーズメニューの描画 (最前面オーバーレイ)
-    if (isPaused_ && pPauseMenu_)
+    // 3. タイムアップメニューの描画 (最前面オーバーレイ)
+    if (isTimeUp_ && pTimeUpMenu_)
     {
-        pPauseMenu_->Draw();
+        pTimeUpMenu_->Draw();
     }
 
     // 4. リザルトメニューの描画 (最前面オーバーレイ)
     if (isResult_ && pResultMenu_)
     {
         pResultMenu_->Draw();
+    }
+
+    // 5. ポーズメニューの描画 (最前面オーバーレイ)
+    if (isPaused_ && pPauseMenu_)
+    {
+        pPauseMenu_->Draw();
     }
 }
 

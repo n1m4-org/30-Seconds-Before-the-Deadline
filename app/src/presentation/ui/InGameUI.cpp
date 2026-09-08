@@ -1,5 +1,7 @@
 #include "InGameUI.h"
 #include <config/ResourcePath.h>
+#include <algorithm>
+#include <cmath>
 
 void InGameUI::Initialize()
 {
@@ -25,8 +27,35 @@ void InGameUI::Initialize()
 	pUISprites_[kTimelimitText] = std::make_unique<Sprite>();
 	pUISprites_[kTimelimitText]->Initialize(Path::Image::InGame::kTimelimitText);
 	pUISprites_[kTimelimitText]->SetAnchorPoint({ 0.0f, 0.5f }); // 左端を基準にする
-	pUISprites_[kTimelimitText]->SetPosition({ 1280.0f, 300.0f }); // 制限時間テキストの位置を設定
+	pUISprites_[kTimelimitText]->SetPosition({ 1270.0f, 300.0f }); // 制限時間テキストの位置を設定
 	pUISprites_[kTimelimitText]->SetSize(pUISprites_[kTimelimitText]->GetSize() / 3.0f); // 初期サイズを設定
+
+	// 制限時間表示用数字スプライト
+	float timelimitW = pUISprites_[kTimelimitText]->GetSize().x;
+	float timelimitH = pUISprites_[kTimelimitText]->GetSize().y;
+	float timelimitTopY = 300.0f - timelimitH * 0.5f;
+	float baselineY = timelimitTopY + (118.0f / 128.0f) * timelimitH; // 文字下端ライン
+
+	Vector2 digitSize = { 48.0f, 64.0f }; // サイズ調整
+	float digitTopY = baselineY - (118.0f / 128.0f) * digitSize.y;
+	float digitY = digitTopY + digitSize.y * 0.5f; // AnchorPoint(0.0f, 0.5f) の中心Y座標
+	float digitStartX = 1270.0f + timelimitW + 12.0f;
+
+	pTimerTens_ = std::make_unique<Sprite>();
+	pTimerTens_->Initialize(Path::Image::kUINumbers);
+	pTimerTens_->SetAnchorPoint({ 0.0f, 0.5f });
+	pTimerTens_->SetSize(digitSize);
+	pTimerTens_->SetPosition({ digitStartX, digitY });
+	pTimerTens_->SetTextureLeftTop({ 3.0f * 96.0f, 0.0f }); // 初期値3
+	pTimerTens_->SetTextureSize({ 96.0f, 128.0f });
+
+	pTimerOnes_ = std::make_unique<Sprite>();
+	pTimerOnes_->Initialize(Path::Image::kUINumbers);
+	pTimerOnes_->SetAnchorPoint({ 0.0f, 0.5f });
+	pTimerOnes_->SetSize(digitSize);
+	pTimerOnes_->SetPosition({ digitStartX + digitSize.x - 8.0f, digitY });
+	pTimerOnes_->SetTextureLeftTop({ 0.0f * 96.0f, 0.0f }); // 初期値0
+	pTimerOnes_->SetTextureSize({ 96.0f, 128.0f });
 
 	pUISprites_[kMoveExplanationText] = std::make_unique<Sprite>();
 	pUISprites_[kMoveExplanationText]->Initialize(Path::Image::InGame::kMoveExplanationText);
@@ -40,9 +69,11 @@ void InGameUI::Initialize()
 	pUISprites_[kClearText]->SetSize(pUISprites_[kClearText]->GetSize() / 2.0f); // 初期サイズを設定
 }
 
-void InGameUI::Update(float progress)
+void InGameUI::Update(float progress, float remainingTime)
 {
 	progress_ = progress;
+	remainingTime_ = remainingTime;
+
 	// 進捗バーのサイズを更新
 	if (pUISprites_[kProgressBar])
 	{
@@ -54,12 +85,37 @@ void InGameUI::Update(float progress)
 		pUISprites_[kProgressBar]->SetTextureLeftTop({ 0.0f, 0.0f });
 		pUISprites_[kProgressBar]->SetTextureSize({ originalTextureWidth * progress, pUISprites_[kProgressBar]->GetSize().y });
 	}
+
 	for (auto&& sprite : pUISprites_)
 	{
 		if (sprite)
 		{
 			sprite->Update();
 		}
+	}
+
+	// 制限時間の数字スプライト更新 (0〜99秒)
+	int displaySec = (std::clamp)(static_cast<int>(std::ceil(remainingTime_)), 0, 99);
+	int tens = displaySec / 10;
+	int ones = displaySec % 10;
+
+	// 残り5秒以下なら赤系警告色
+	Vector4 timerColor = (remainingTime_ <= 5.0f) ? Vector4{ 1.0f, 0.25f, 0.25f, 1.0f } : Vector4{ 1.0f, 1.0f, 1.0f, 1.0f };
+
+	if (pTimerTens_)
+	{
+		pTimerTens_->SetTextureLeftTop({ static_cast<float>(tens) * 96.0f, 0.0f });
+		pTimerTens_->SetTextureSize({ 96.0f, 128.0f });
+		pTimerTens_->SetColor(timerColor);
+		pTimerTens_->Update();
+	}
+
+	if (pTimerOnes_)
+	{
+		pTimerOnes_->SetTextureLeftTop({ static_cast<float>(ones) * 96.0f, 0.0f });
+		pTimerOnes_->SetTextureSize({ 96.0f, 128.0f });
+		pTimerOnes_->SetColor(timerColor);
+		pTimerOnes_->Update();
 	}
 }
 
@@ -68,7 +124,6 @@ void InGameUI::Draw()
 	int index = 0;
 	for (auto&& sprite : pUISprites_)
 	{
-		
 		if (sprite)
 		{
 			if (sprite == pUISprites_[kClearText] && progress_ < 1.0f)
@@ -84,5 +139,15 @@ void InGameUI::Draw()
 			sprite->Draw1F();
 		}
 		index++;
+	}
+
+	// 制限時間数字の描画
+	if (pTimerTens_)
+	{
+		pTimerTens_->Draw1F();
+	}
+	if (pTimerOnes_)
+	{
+		pTimerOnes_->Draw1F();
 	}
 }

@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <algorithm>
 #include <dinput.h>
+#include <Core/Window/Window.h>
+#include <Features/DeltaTimeManager/DeltaTimeManager.h>
 
 StageManager::StageManager()
 {
@@ -24,24 +26,35 @@ void StageManager::Initialize()
     tm->LoadTexture(Path::Image::InGame::kTile);
     tm->LoadTexture(Path::Image::InGame::kTestTile);
 
-    // マップファイル一覧の取得と初期マップの読み込み
+    // マップファイル一覧の取得と初期マップの読み込み (stage1_1.json を最優先)
     RefreshMapFileList();
-    std::string initialMap = "test_map.json";
-    if (!mapFileList_.empty())
+    std::string initialMap = "stage1_1.json";
+    bool hasInitialMap = false;
+    for (const auto& file : mapFileList_)
     {
-        bool hasTestMap = false;
+        if (file == "stage1_1.json")
+        {
+            hasInitialMap = true;
+            break;
+        }
+    }
+
+    if (!hasInitialMap)
+    {
         for (const auto& file : mapFileList_)
         {
             if (file == "test_map.json")
             {
-                hasTestMap = true;
+                initialMap = "test_map.json";
+                hasInitialMap = true;
                 break;
             }
         }
-        if (!hasTestMap)
-        {
-            initialMap = mapFileList_[0];
-        }
+    }
+
+    if (!hasInitialMap && !mapFileList_.empty())
+    {
+        initialMap = mapFileList_[0];
     }
     currentLoadedMapFile_ = initialMap;
     MapLoad(initialMap);
@@ -55,6 +68,12 @@ void StageManager::Initialize()
 
 void StageManager::Update(Input* pInput)
 {
+    // F5キーでエディットモードとプレイモードをトグル切り替え
+    if (pInput && pInput->TriggerKey(DIK_F5))
+    {
+        ToggleEditorState();
+    }
+
     // 地形タイルの更新
     for (auto& tileRow : pSpriteTile_)
     {
@@ -67,35 +86,60 @@ void StageManager::Update(Input* pInput)
         }
     }
 
-    // キーボードによるステージリセット (R) と アンドゥ (Z / U)
-    if (pInput && !ImGui::GetIO().WantCaptureKeyboard)
+    // --- プレイモード時のみ実行されるゲームロジック (タイマー・操作・リセット) ---
+    if (IsPlayMode())
     {
-        if (pInput->TriggerKey(DIK_R) || pInput->TriggerKeyC('R') || pInput->TriggerKeyC('r'))
+        // キーボードによるステージリセット (R) と アンドゥ (Z / U)
+        if (pInput && !ImGui::GetIO().WantCaptureKeyboard && !IsTimeUp() && !IsCleared())
         {
-            ResetStage();
-        }
-        else if (pInput->TriggerKey(DIK_Z) || pInput->TriggerKeyC('Z') || pInput->TriggerKeyC('z') ||
-                 pInput->TriggerKey(DIK_U) || pInput->TriggerKeyC('U') || pInput->TriggerKeyC('u'))
-        {
-            Undo();
-        }
-    }
-
-    // プレイヤーのキー入力制御 (WASD移動・押し出し・長押し連続移動)
-    if (pPlayer_ && pInput)
-    {
-        GameStepSnapshot snapshotBeforeMove = CaptureSnapshot();
-        if (pPlayer_->HandleInput(pInput, mapCollision_, currentMap_, pMapObjects_))
-        {
-            undoStack_.push_back(snapshotBeforeMove);
-            if (undoStack_.size() > 100)
+            if (pInput->TriggerKey(DIK_R) || pInput->TriggerKeyC('R') || pInput->TriggerKeyC('r'))
             {
-                undoStack_.erase(undoStack_.begin());
+                ResetStage();
+            }
+            else if (pInput->TriggerKey(DIK_Z) || pInput->TriggerKeyC('Z') || pInput->TriggerKeyC('z') ||
+                     pInput->TriggerKey(DIK_U) || pInput->TriggerKeyC('U') || pInput->TriggerKeyC('u'))
+            {
+                Undo();
+            }
+        }
+
+        // 制限時間カウントダウン (クリア済みまたはタイムアップ時は停止)
+        if (isTimeLimitEnabled_ && !IsCleared() && !IsTimeUp())
+        {
+            float dt = 1.0f / 60.0f;
+            try
+            {
+                dt = DeltaTimeManager::GetInstance()->GetDeltaTime(static_cast<uint32_t>(DeltaTimeChannelReserved::Game));
+            }
+            catch (...)
+            {
+                dt = 1.0f / 60.0f;
+            }
+
+            remainingTime_ -= dt;
+            if (remainingTime_ <= 0.0f)
+            {
+                remainingTime_ = 0.0f;
+                // タイムアップ時はリセットせず停止 (GameScene側のTimeUpMenuからRetry等を選択可能にする)
+            }
+        }
+
+        // プレイヤーのキー入力制御 (WASD移動・押し出し・長押し連続移動)
+        if (pPlayer_ && pInput && !IsTimeUp() && !IsCleared())
+        {
+            GameStepSnapshot snapshotBeforeMove = CaptureSnapshot();
+            if (pPlayer_->HandleInput(pInput, mapCollision_, currentMap_, pMapObjects_))
+            {
+                undoStack_.push_back(snapshotBeforeMove);
+                if (undoStack_.size() > 100)
+                {
+                    undoStack_.erase(undoStack_.begin());
+                }
             }
         }
     }
 
-    // 全オブジェクトの座標およびアニメーション更新
+    // 全オブジェクトの座標およびアニメーション更新 (Play/Edit共通で見た目をリアルタイム同期)
     for (auto& object : pMapObjects_)
     {
         if (object)
@@ -113,16 +157,26 @@ void StageManager::Update(Input* pInput)
     // オブジェクトの移動に合わせて最新の合成マップ（マップ番号）を更新
     UpdateCurrentMap();
 
-    // 電波伝搬・減衰の計算 (初期強度 10 マス)
+    // 電波伝搬・減衰の計算 (初期強度 10 マス) - 編集時もリアルタイムにプレビュー可能
     isPcConnected_ = signalSystem_.UpdateSignal(mapWidth_, mapHeight_, currentMap_, pMapObjects_, signalStrengthMap_, pcReceivedStrength_);
 
-    // PCオブジェクトへ電波受信状態と強度の通知
+    // PCオブジェクトへ電波受信状態と強度の通知 (Playモード時のみ進捗蓄積、Editモード時は接続状態のみプレビュー)
     for (auto& object : pMapObjects_)
     {
         if (object && object->GetObjectType() == ObjectType2d::kPC)
         {
             PC* pcObj = static_cast<PC*>(object.get());
-            pcObj->UpdateSignal(isPcConnected_, pcReceivedStrength_);
+            if (IsPlayMode())
+            {
+                pcObj->UpdateSignal(isPcConnected_, pcReceivedStrength_);
+            }
+            else
+            {
+                float currentProg = pcObj->GetDataProgress();
+                bool currentCleared = pcObj->IsCleared();
+                pcObj->UpdateSignal(isPcConnected_, pcReceivedStrength_);
+                pcObj->SetProgress(currentProg, currentCleared);
+            }
         }
     }
 
@@ -227,6 +281,11 @@ void StageManager::Draw()
 
 bool StageManager::IsCleared() const
 {
+    if (IsEditMode())
+    {
+        return false; // エディットモード中はクリア判定を無効化
+    }
+
     for (const auto& obj : pMapObjects_)
     {
         if (obj && obj->GetObjectType() == ObjectType2d::kPC)
@@ -551,6 +610,9 @@ void StageManager::MapLoad(const std::string& path)
             }
         }
 
+        // マップサイズに合わせてタイルサイズとオフセットを自動計算
+        UpdateLayoutForMapSize();
+
         if (mapJson.contains("objects") && mapJson["objects"].is_array() && !mapJson["objects"].empty())
         {
             hasObjectsInJson = true;
@@ -589,6 +651,9 @@ void StageManager::MapLoad(const std::string& path)
                 mapData_[y][x] = mapJson[y][x].get<int>();
             }
         }
+
+        // マップサイズに合わせてタイルサイズとオフセットを自動計算
+        UpdateLayoutForMapSize();
     }
 
     // JSONにオブジェクト情報がなかった場合はテスト用配置を作成して最新形式で保存
@@ -672,6 +737,8 @@ void StageManager::CreateNewMap(const std::string& fileName, int width, int heig
     mapData_.assign(mapHeight_, std::vector<int>(mapWidth_, 0));
     signalStrengthMap_.assign(mapHeight_, std::vector<int>(mapWidth_, 0));
 
+    UpdateLayoutForMapSize();
+
     InitializeTestObjects();
 
     currentLoadedMapFile_ = actualFileName;
@@ -697,8 +764,113 @@ void StageManager::LoadMap(const std::string& fileName)
     pSignalSpriteTile_.clear();
     InitializeSprites();
 
+    remainingTime_ = kDefaultTimeLimit;
     SaveInitialSnapshot();
     RefreshMapFileList();
+}
+
+bool StageManager::ParseStageFileName(const std::string& fileName, int& outWorld, int& outStage) const
+{
+    std::filesystem::path p(fileName);
+    std::string stem = p.stem().string();
+
+    int world = 0;
+    int stage = 0;
+    if (sscanf_s(stem.c_str(), "stage%d_%d", &world, &stage) == 2)
+    {
+        if (world >= 1 && stage >= 1)
+        {
+            outWorld = world;
+            outStage = stage;
+            return true;
+        }
+    }
+    return false;
+}
+
+std::string StageManager::GetNextStageFileName() const
+{
+    int world = 0;
+    int stage = 0;
+    if (ParseStageFileName(currentLoadedMapFile_, world, stage))
+    {
+        int nextWorld = world;
+        int nextStage = stage + 1;
+        if (nextStage > 4)
+        {
+            nextWorld = world + 1;
+            nextStage = 1;
+        }
+
+        std::string nextFileName = "stage" + std::to_string(nextWorld) + "_" + std::to_string(nextStage) + ".json";
+        std::string fullPath = std::string(Path::Resource::kJsonDir) + Path::Json::kMapDir + nextFileName;
+        if (std::filesystem::exists(fullPath))
+        {
+            return nextFileName;
+        }
+    }
+    else
+    {
+        // stageW_S.json 形式以外のマップの場合、stage1_1.json があればそれを返す
+        std::string firstStage = "stage1_1.json";
+        std::string fullPath = std::string(Path::Resource::kJsonDir) + Path::Json::kMapDir + firstStage;
+        if (std::filesystem::exists(fullPath))
+        {
+            return firstStage;
+        }
+    }
+
+    return "";
+}
+
+bool StageManager::HasNextStage() const
+{
+    return !GetNextStageFileName().empty();
+}
+
+bool StageManager::LoadNextStage()
+{
+    std::string nextMap = GetNextStageFileName();
+    if (!nextMap.empty())
+    {
+        LoadMap(nextMap);
+        return true;
+    }
+    return false;
+}
+
+std::string StageManager::GetCurrentStageDisplayName() const
+{
+    int world = 0;
+    int stage = 0;
+    if (ParseStageFileName(currentLoadedMapFile_, world, stage))
+    {
+        return "STAGE " + std::to_string(world) + "-" + std::to_string(stage);
+    }
+    return currentLoadedMapFile_;
+}
+
+void StageManager::UpdateLayoutForMapSize()
+{
+    float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1600);
+    float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 900);
+    const float targetAreaW = 900.0f;
+    const float targetAreaH = 900.0f;
+    float centerX = screenW * 0.5f;
+    float centerY = screenH * 0.5f;
+
+    if (mapWidth_ > 0 && mapHeight_ > 0)
+    {
+        float tileW = targetAreaW / static_cast<float>(mapWidth_);
+        float tileH = targetAreaH / static_cast<float>(mapHeight_);
+        tileSize_ = (std::min)(tileW, tileH);
+
+        float totalMapW = static_cast<float>(mapWidth_) * tileSize_;
+        float totalMapH = static_cast<float>(mapHeight_) * tileSize_;
+
+        mapOffset_.x = centerX - totalMapW * 0.5f;
+        mapOffset_.y = centerY - totalMapH * 0.5f;
+    }
 }
 
 StageManager::GameStepSnapshot StageManager::CaptureSnapshot() const
@@ -826,6 +998,38 @@ void StageManager::ResetStage()
 
     RestoreSnapshot(initialSnapshot_);
     undoStack_.clear();
+    remainingTime_ = kDefaultTimeLimit;
+}
+
+void StageManager::SetEditorState(EditorState state)
+{
+    if (editorState_ == state)
+    {
+        return;
+    }
+
+    if (state == EditorState::Play)
+    {
+        // Edit -> Play へ移行
+        // 編集した最新の配置をテストプレイ用初期状態として保存
+        initialSnapshot_ = CaptureSnapshot();
+        undoStack_.clear();
+        remainingTime_ = kDefaultTimeLimit; // 30秒タイマー初期化
+        editorState_ = EditorState::Play;
+    }
+    else
+    {
+        // Play -> Edit へ移行
+        // プレイ中に移動したオブジェクトを編集開始時の初期状態に復元
+        RestoreSnapshot(initialSnapshot_);
+        undoStack_.clear();
+        editorState_ = EditorState::Edit;
+    }
+}
+
+void StageManager::ToggleEditorState()
+{
+    SetEditorState(editorState_ == EditorState::Play ? EditorState::Edit : EditorState::Play);
 }
 
 void StageManager::MapEdit()
@@ -833,27 +1037,89 @@ void StageManager::MapEdit()
 #ifdef _DEBUG
     ImGui::Begin("Map Editor");
 
+    // --- 1. エディットモード / プレイモード切り替えヘッダー ---
+    bool isPlay = IsPlayMode();
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
+
+    if (isPlay)
+    {
+        ImGui::TextColored(ImVec4(0.25f, 1.0f, 0.45f, 1.0f), "● CURRENT: [ PLAY MODE ] (Testing / WASD enabled / Timer running)");
+    }
+    else
+    {
+        ImGui::TextColored(ImVec4(0.35f, 0.85f, 1.0f, 1.0f), "● CURRENT: [ EDIT MODE ] (Editing Map / Controls paused / Timer paused)");
+    }
+
+    if (isPlay)
+    {
+        // プレイモード中: エディットモードに戻る（RevertまたはKeep）
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.45f, 0.75f, 0.90f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.30f, 0.60f, 0.95f, 1.0f));
+        if (ImGui::Button("[F5] Stop & Revert to EDIT Mode", ImVec2(240, 32)))
+        {
+            SetEditorState(EditorState::Edit);
+        }
+        ImGui::PopStyleColor(2);
+
+        ImGui::SameLine();
+        if (ImGui::Button("Keep State & Edit", ImVec2(140, 32)))
+        {
+            initialSnapshot_ = CaptureSnapshot();
+            editorState_ = EditorState::Edit;
+        }
+    }
+    else
+    {
+        // エディットモード中: プレイモードを開始
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.18f, 0.62f, 0.32f, 0.90f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.26f, 0.82f, 0.45f, 1.0f));
+        if (ImGui::Button("[F5] Start PLAY Mode", ImVec2(240, 32)))
+        {
+            SetEditorState(EditorState::Play);
+        }
+        ImGui::PopStyleColor(2);
+    }
+
+    ImGui::PopStyleVar();
+    ImGui::Separator();
+
     // 電波の接続ステータスを表示
     if (isPcConnected_)
     {
-        ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.3f, 1.0f), "[SIGNAL STATUS]: PC CONNECTED");
+        ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.3f, 1.0f), "[SIGNAL STATUS]: PC CONNECTED (Strength: %d)", pcReceivedStrength_);
     }
     else
     {
         ImGui::TextColored(ImVec4(1.0f, 0.4f, 0.3f, 1.0f), "[SIGNAL STATUS]: NO SIGNAL REACHED PC");
     }
 
-    // アンドゥ & ステージリセット
+    // アンドゥ & ステージリセット (Playモードのみアクティブ、Editモード時は無効表示または説明)
     std::string undoLabel = "Undo (Z) [" + std::to_string(undoStack_.size()) + "]";
     if (ImGui::Button(undoLabel.c_str()))
     {
-        Undo();
+        if (IsPlayMode())
+        {
+            Undo();
+        }
     }
     ImGui::SameLine();
     if (ImGui::Button("Reset Stage (R)"))
     {
         ResetStage();
     }
+
+    // 制限時間表示
+    if (IsPlayMode())
+    {
+        ImGui::Text("Time Remaining: %.1f / %.1f sec", remainingTime_, kDefaultTimeLimit);
+    }
+    else
+    {
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Time Remaining: [PAUSED in Edit Mode] (%.1f / %.1f sec)", remainingTime_, kDefaultTimeLimit);
+    }
+    ImGui::SameLine();
+    ImGui::Checkbox("Enable Timer", &isTimeLimitEnabled_);
 
     ImGui::Separator();
 
@@ -910,7 +1176,14 @@ void StageManager::MapEdit()
     }
 
     ImGui::Separator();
-    ImGui::Text("Map Grid (Click to paint/place, Right-Click to Rotate)");
+    if (IsEditMode())
+    {
+        ImGui::TextColored(ImVec4(0.35f, 0.85f, 1.0f, 1.0f), "Map Grid (Click to paint/place, Right-Click to Rotate)");
+    }
+    else
+    {
+        ImGui::TextColored(ImVec4(1.0f, 0.75f, 0.3f, 1.0f), "Map Grid [READ-ONLY in Play Mode] (Press F5 or 'Stop & Revert' to edit)");
+    }
 
     for (int y = 0; y < mapHeight_; ++y)
     {
@@ -953,8 +1226,8 @@ void StageManager::MapEdit()
 
             ImGui::Button(label.c_str(), ImVec2(28, 28));
 
-            // 左クリックで配置・操作
-            if (ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Left))
+            // 左クリックで配置・操作 (Editモード時のみ許可)
+            if (IsEditMode() && ImGui::IsItemHovered() && ImGui::IsMouseDown(ImGuiMouseButton_Left))
             {
                 if (editorMode == 0) // 地形ペイント
                 {
@@ -1020,8 +1293,8 @@ void StageManager::MapEdit()
                     isMapEditedThisFrame = true;
                 }
             }
-            // 右クリックで既存オブジェクトの向き・タイプを回転/切替
-            else if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+            // 右クリックで既存オブジェクトの向き・タイプを回転/切替 (Editモード時のみ許可)
+            else if (IsEditMode() && ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
             {
                 if (objAtPos)
                 {
@@ -1154,6 +1427,14 @@ void StageManager::MapEdit()
         UpdateCurrentMap();
         InitializeSprites();
     }
+    if (ImGui::Button("Auto Fit Layout (Center)"))
+    {
+        UpdateLayoutForMapSize();
+        pSpriteTile_.clear();
+        pSignalSpriteTile_.clear();
+        InitializeSprites();
+    }
+    ImGui::SameLine();
     if (ImGui::Button("refresh"))
     {
         for (int y = 0; y < mapHeight_; ++y)
