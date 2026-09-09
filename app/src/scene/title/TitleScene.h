@@ -27,6 +27,7 @@
 #include <drawable/particle/Emitter/ParticleEmitter.h>
 #include <drawable/particle/Particle.h>
 #include <scene/title/animation/PlayerPopupAnimation.h>
+#include <scene/title/ui/TitleMenu.h>
 #include <Features/Animation/AnimationEditor.hpp>
 
 /// <summary>
@@ -82,9 +83,14 @@ private:
     std::unique_ptr<Canvas>             pCanvasWorld_               = nullptr;      // !< タイトルキャンバス
     std::unique_ptr<GameEye2d>          gameEye_                    = {};           // !< ゲームアイ
     std::unique_ptr<PlayerPopupAnimation> pPlayerPopupAnimation_    = nullptr;      // !< プレイヤーポップアップアニメーション
+    std::unique_ptr<Skybox>     pSkybox_ = nullptr;          // !< スカイボックス
 
     std::unique_ptr<ParticleEmitter>    pParticleEmitter_           = nullptr;      // !< パーティクルエミッター
     Particle*                           pParticle_                  = nullptr;      // !< パーティクル
+
+	Audio* pBgmAudio_ = nullptr; // !< BGMオーディオ
+    std::unique_ptr<Sprite> pTitleTextSprite_ = nullptr;   // !< タイトルロゴテキスト
+    std::unique_ptr<TitleMenu> pTitleMenu_ = nullptr;      // !< タイトルメニューUI
 
     /// 他クラスのインスタンス
     PostEffectExecutor*         pPostEffectExecutor_    = nullptr;      // !< ポストエフェクト実行クラス

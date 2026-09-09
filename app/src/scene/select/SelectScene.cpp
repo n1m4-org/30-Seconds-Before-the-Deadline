@@ -58,12 +58,45 @@ void SelectScene::Initialize()
 
     // 初期状態のスプライト座標と外観を更新
     UpdateCardVisuals();
+
+    pBgmAudio_ = AudioManager::GetInstance()->GetNewAudio("BGM", Path::Audio::kBgmTitle);
+    pBgmAudio_->SetVolume(0.075f);
+    pBgmAudio_->Play(true);
+
+    // SE初期化
+    pChoiceAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kChoiceSE);
+    if (pChoiceAudio_)
+    {
+        pChoiceAudio_->SetVolume(0.12f);
+    }
+    pDecisionAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kDecisionSE);
+    if (pDecisionAudio_)
+    {
+        pDecisionAudio_->SetVolume(0.18f);
+    }
+}
+
+SelectScene::~SelectScene()
+{
+    Finalize();
 }
 
 void SelectScene::Finalize()
 {
-    pLayer_->RemoveCanvas(pCanvasUI_.get());
-    if (pCanvasUI_) pCanvasUI_->Finalize();
+    if (pBgmAudio_)
+    {
+        pBgmAudio_->Stop();
+        pBgmAudio_ = nullptr;
+    }
+    if (pLayer_ && pCanvasUI_)
+    {
+        pLayer_->RemoveCanvas(pCanvasUI_.get());
+    }
+    if (pCanvasUI_)
+    {
+        pCanvasUI_->Finalize();
+        pCanvasUI_.reset();
+    }
 
     pGameEye_.reset();
 }
@@ -72,7 +105,6 @@ void SelectScene::InitializeGameEye()
 {
     pGameEye_ = std::make_unique<GameEye2d>();
     pGameEye_->SetName("SelectSceneGameEye");
-    SpriteSystem::GetInstance()->SetGlobalEye(pGameEye_.get());
 }
 
 void SelectScene::InitializeCanvas()
@@ -176,7 +208,7 @@ void SelectScene::BuildStageCards()
     pSpriteScreenBg_->SetAnchorPoint({ 0.5f, 0.5f });
     pSpriteScreenBg_->SetPosition({ 800.0f, 450.0f });
     pSpriteScreenBg_->SetSize({ 1600.0f, 900.0f });
-    pSpriteScreenBg_->SetColor({ 0.08f, 0.10f, 0.14f, 1.0f }); // 高級感のあるダークネイビー
+    pSpriteScreenBg_->SetColor({ 0.08f, 0.10f, 0.14f, 1.0f });
 
     const float cardW = 180.0f;
     const float cardH = 96.0f;
@@ -311,6 +343,7 @@ void SelectScene::UpdateInput()
     if (stageCards_.empty()) return;
 
     int curIdx = selectedIndex_;
+    int prevIdx = selectedIndex_;
     const auto& curCard = stageCards_[curIdx];
 
     // [D] / [→]: 次のステージへ
@@ -382,9 +415,22 @@ void SelectScene::UpdateInput()
         }
     }
 
+    // カーソル移動SE再生
+    if (selectedIndex_ != prevIdx)
+    {
+        if (pChoiceAudio_)
+        {
+            pChoiceAudio_->Play();
+        }
+    }
+
     // [Space] / [Enter]: 決定 (ゲーム開始)
     if (pInput_->TriggerKey(DIK_SPACE) || pInput_->TriggerKey(DIK_RETURN))
     {
+        if (pDecisionAudio_)
+        {
+            pDecisionAudio_->Play();
+        }
         isChangingScene_ = true;
 
         // 選択されたステージのファイル名をセット

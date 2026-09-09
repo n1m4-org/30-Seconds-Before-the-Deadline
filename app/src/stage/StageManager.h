@@ -16,6 +16,7 @@
 #include <logic/signal/SignalSystem.h>
 #include <config/ResourcePath.h>
 #include <Utility/JSONIO/JSONIO.h>
+#include <Features/Audio/Audio.h>
 
 /// <summary>
 /// ステージ管理クラス
@@ -179,6 +180,16 @@ public:
     bool LoadNextStage();
 
     /// <summary>
+    /// PCへデータアップロード中かどうか
+    /// </summary>
+    bool IsUploading() const;
+
+    /// <summary>
+    /// アップロードSEを停止
+    /// </summary>
+    void StopUploadSE();
+
+    /// <summary>
     /// 現在のステージの表示名 (例: "STAGE 1-1") を取得
     /// </summary>
     std::string GetCurrentStageDisplayName() const;
@@ -276,6 +287,11 @@ private:
 
     bool isEditorEnabled_ = true; // !< エディタ表示フラグ
     EditorState editorState_ = EditorState::Play; // !< エディタ状態 (Play / Edit)
+
+    // 音声
+    Audio* pRotateAudio_ = nullptr; // !< 中継器回転SE (kRotateSE)
+    Audio* pUploadAudio_ = nullptr; // !< アップロード中SE (kUploadSE)
+    bool isUploadPlaying_ = false;  // !< アップロードSE再生中フラグ
 
     inline static std::string sSelectedStageFileName_ = "";
     inline static std::string sLastPlayedStageFileName_ = "stage1_1.json";

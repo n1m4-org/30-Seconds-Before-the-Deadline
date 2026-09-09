@@ -15,6 +15,7 @@
 #include <Math/Easing.h>
 #include <Xinput.h>
 #include <drawable/particle/ParticleStorage.h>
+#include <Effects/PostEffects/Scanline/Scanline.h>
 
 void TitleScene::Initialize()
 {
@@ -42,10 +43,20 @@ void TitleScene::Initialize()
 
     pPlayerPopupAnimation_ = std::make_unique<PlayerPopupAnimation>();
     pPlayerPopupAnimation_->Initialize();
+
+    // タイトルメニューの初期化 (kStartGame / kEndGame)
+    pTitleMenu_ = std::make_unique<TitleMenu>();
+    pTitleMenu_->Initialize();
+
+	pBgmAudio_  = AudioManager::GetInstance()->GetNewAudio("BGM", Path::Audio::kBgmTitle);
+    pBgmAudio_->SetVolume(0.075f);
+    pBgmAudio_->Play(true);
 }
 
 void TitleScene::Finalize()
 {
+	pBgmAudio_->Stop();
+    pTitleMenu_.reset();
     gameEye_.reset();
     pLayer_->RemoveCanvas(pCanvasBack_.get());
     pLayer_->RemoveCanvas(pCanvasSprite_.get());
@@ -58,18 +69,22 @@ void TitleScene::Finalize()
 
 void TitleScene::Update()
 {
-    Vector3 eyeRotate = gameEye_->GetRotation();
-    eyeRotate.y += 0.001f;
-
-    float t = (std::sinf(eyeRotate.y * 10.0f) + 1.0f) / 2.0f; // 0から1の範囲で変化する値
-    Vector3 eyePos = gameEye_->GetPosition();
-    eyePos.z = std::lerp(kEyePosZMin_, kEyePosZMax_, Math::Easing::EaseInOutSine(t));
-
     gameEye_->Update();
 
-    if (pInputMapperUI_->IsRelease(InputActionUI::Confirm) && !isChangingScene_)
+    // タイトルメニューの更新とアクション判定
+    if (pTitleMenu_)
     {
-        this->ChangeToGameScene();
+        pTitleMenu_->Update(pInput_, pInputMapperUI_);
+
+        TitleMenuAction action = pTitleMenu_->ConsumeAction();
+        if (action == TitleMenuAction::StartGame && !isChangingScene_)
+        {
+            this->ChangeToGameScene();
+        }
+        else if (action == TitleMenuAction::EndGame && !isChangingScene_)
+        {
+            PostQuitMessage(0);
+        }
     }
 
     pParticleEmitter_->Update();
@@ -79,11 +94,20 @@ void TitleScene::Update()
 
 void TitleScene::Draw()
 {
+    CanvasScope canvasScopeBack(pCanvasBack_.get());
+
     CanvasScope canvasScopeWorld(pCanvasWorld_.get());
     pParticle_->Draw1F();
 
     CanvasScope canvasScopeUI(pCanvasSprite_.get());
-    pPlayerPopupAnimation_->Draw1F();
+    //pPlayerPopupAnimation_->Draw1F();
+    pTitleTextSprite_->Draw1F();
+
+    // タイトルメニュー (kStartGame / kEndGame) の描画
+    if (pTitleMenu_)
+    {
+        pTitleMenu_->Draw();
+    }
 }
 
 void TitleScene::InitializeGameEye()
@@ -102,12 +126,24 @@ void TitleScene::InitializeGameEye()
 
 void TitleScene::InitializeSprites()
 {
+    // クリアテキスト
+    pTitleTextSprite_ = std::make_unique<Sprite>();
+    pTitleTextSprite_->Initialize(Path::Image::InGame::kTitleText);
+    pTitleTextSprite_->SetAnchorPoint({ 0.5f, 0.5f });
+	pTitleTextSprite_->SetPosition({ 800.0f, 200.0f });
+    pTitleTextSprite_->Update();
 }
 
 void TitleScene::InitializeSkybox()
 {
     auto pTM = TextureManager::GetInstance();
     pTM->LoadTexture(Path::Image::kTitleSkybox);
+
+    pSkybox_ = std::make_unique<Skybox>();
+    pSkybox_->Initialize(pCubemapSystem_);
+    pSkybox_->SetSkyboxTexture(pTM->GetSrvHandleGPU(Path::Image::kTitleSkybox));
+
+    pCanvasBack_->RegisterDrawable(pSkybox_.get());
 }
 
 void TitleScene::InitializeParticleEmitter()
@@ -136,6 +172,16 @@ void TitleScene::InitializeCanvas()
 
     pCanvasBack_ = std::make_unique<Canvas>();
     pCanvasBack_->Initialize(params);
+    IPostEffect* scanline = pCanvasBack_->GetPostEffectExecutor().AddEffect(
+        PostEffectClassName::Scanline
+    );
+    scanline->Enable(true);
+    auto* concrete = static_cast<Scanline*>(scanline);
+    Scanline::ScanlineOption* options = &concrete->GetOption();
+    options->color0 = { 0.38f,0.38f,0.38f,1.0f };
+    options->color1 = { 0.29f,0.29f,0.29f,1.0f };
+    options->division = 25;
+    options->speed = 0.28f;
 
     params.name = "TitleCanvasWorld";
     pCanvasWorld_ = std::make_unique<Canvas>();

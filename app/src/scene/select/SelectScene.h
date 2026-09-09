@@ -8,6 +8,7 @@
 #include <Features/Layer/Canvas.h>
 #include <drawable/sprite/Sprite.h>
 #include <Features/GameEye2d/GameEye2d.h>
+#include <Features/Audio/Audio.h>
 #include <memory>
 #include <vector>
 #include <string>
@@ -21,7 +22,7 @@ class SelectScene : public SceneBase
 {
 public:
     SelectScene(ISceneArgs* pArgs);
-    ~SelectScene() override = default;
+    ~SelectScene() override;
 
     void Initialize() override;
     void Finalize() override;
@@ -83,4 +84,7 @@ private:
     float                       currentScrollY_ = 0.0f;
     float                       targetScrollY_  = 0.0f;
     bool                        isChangingScene_= false;
+    Audio* pBgmAudio_ = nullptr; // !< BGMオーディオ
+    Audio* pChoiceAudio_ = nullptr; // !< カーソル移動SE (kChoiceSE)
+    Audio* pDecisionAudio_ = nullptr; // !< 決定SE (kDecisionSE)
 };

@@ -6,6 +6,7 @@
 #include <Features/Input/Input.h>
 #include <Vector2.h>
 #include <Vector4.h>
+#include <Features/Audio/Audio.h>
 
 /// <summary>
 /// ポーズメニューで実行されたアクション
@@ -84,7 +85,11 @@ private:
     std::unique_ptr<Sprite> pOverlaySprite_ = nullptr; // !< 画面全体の半透明暗幕
     std::unique_ptr<Sprite> pPanelSprite_ = nullptr;   // !< メニュー中央のパネル背景
     std::array<std::unique_ptr<Sprite>, kItemCount> pButtonSprites_{}; // !< 各ボタン
+    std::array<std::unique_ptr<Sprite>, kItemCount> pTextSprites_{}; // !< 各ボタン
     std::unique_ptr<Sprite> pCursorSprite_ = nullptr;  // !< 選択中ボタンのカーソルバー
+
+    Audio* pChoiceAudio_ = nullptr;   // !< カーソル移動SE (kChoiceSE)
+    Audio* pDecisionAudio_ = nullptr; // !< 決定SE (kDecisionSE)
 
     float animTimer_ = 0.0f; // !< 選択中ボタンのパルス・アニメーションタイマー
 };

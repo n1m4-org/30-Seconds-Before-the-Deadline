@@ -10,6 +10,7 @@
 #include <dinput.h>
 #include <Core/Window/Window.h>
 #include <Features/DeltaTimeManager/DeltaTimeManager.h>
+#include <Features/Audio/AudioManager.h>
 
 StageManager::StageManager()
 {
@@ -18,6 +19,7 @@ StageManager::StageManager()
 
 StageManager::~StageManager()
 {
+    StopUploadSE();
 }
 
 void StageManager::Initialize()
@@ -25,6 +27,19 @@ void StageManager::Initialize()
     TextureManager* tm = TextureManager::GetInstance();
     tm->LoadTexture(Path::Image::InGame::kTile);
     tm->LoadTexture(Path::Image::InGame::kTestTile);
+
+    // SEの初期化
+    pRotateAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kRotateSE);
+    if (pRotateAudio_)
+    {
+        pRotateAudio_->SetVolume(0.18f);
+    }
+    pUploadAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kUploadSE);
+    if (pUploadAudio_)
+    {
+        pUploadAudio_->SetVolume(0.14f);
+    }
+    isUploadPlaying_ = false;
 
     // マップファイル一覧の取得と初期マップの読み込み
     RefreshMapFileList();
@@ -164,7 +179,11 @@ void StageManager::Update(Input* pInput)
 
             if (object->GetObjectType() == ObjectType2d::kRotatingFloor)
             {
-                static_cast<RotatingFloor*>(object.get())->CheckAndRotateRepeater(pMapObjects_);
+                bool rotated = static_cast<RotatingFloor*>(object.get())->CheckAndRotateRepeater(pMapObjects_);
+                if (rotated && pRotateAudio_)
+                {
+                    pRotateAudio_->Play();
+                }
             }
         }
     }
@@ -193,6 +212,24 @@ void StageManager::Update(Input* pInput)
                 pcObj->SetProgress(currentProg, currentCleared);
             }
         }
+    }
+
+    // アップロード中SEの再生制御 (アップロード中流し続ける)
+    bool uploading = IsUploading();
+    if (uploading)
+    {
+        if (!isUploadPlaying_)
+        {
+            if (pUploadAudio_)
+            {
+                pUploadAudio_->Play(true); // ループ再生
+            }
+            isUploadPlaying_ = true;
+        }
+    }
+    else
+    {
+        StopUploadSE();
     }
 
     // 電波表示タイルの更新 (オブジェクトが乗っていない床マスのみ電波を描画)
@@ -354,8 +391,8 @@ Path::Image::InGame::WallType StageManager::CalculateAutoWallType(int x, int y) 
     if (IsWall(x, y + 1)) mask |= kDirBottom;
 
     using namespace Path::Image::InGame;
-    static const WallType kMaskToWallType[16] = {
-        WallType::kT,    // 0: 孤立壁 -> wall_end_T (指定仕様)
+    static const WallType kMaskToWallType[static_cast<size_t>(WallType::WallTypeCount)] = {
+        WallType::kW,    // 0: 孤立壁 W
         WallType::kL,    // 1: L
         WallType::kR,    // 2: R
         WallType::kRL,   // 3: L + R
@@ -772,6 +809,7 @@ void StageManager::CreateNewMap(const std::string& fileName, int width, int heig
 
 void StageManager::LoadMap(const std::string& fileName)
 {
+    StopUploadSE();
     currentLoadedMapFile_ = fileName;
     sLastPlayedStageFileName_ = fileName;
     MapLoad(fileName);
@@ -854,6 +892,38 @@ bool StageManager::LoadNextStage()
         return true;
     }
     return false;
+}
+
+bool StageManager::IsUploading() const
+{
+    if (!IsPlayMode() || IsCleared() || IsTimeUp())
+    {
+        return false;
+    }
+    for (const auto& obj : pMapObjects_)
+    {
+        if (obj && obj->GetObjectType() == ObjectType2d::kPC)
+        {
+            PC* pc = static_cast<PC*>(obj.get());
+            if (pc->IsUploading())
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void StageManager::StopUploadSE()
+{
+    if (isUploadPlaying_)
+    {
+        if (pUploadAudio_)
+        {
+            pUploadAudio_->Stop();
+        }
+        isUploadPlaying_ = false;
+    }
 }
 
 std::string StageManager::GetCurrentStageDisplayName() const
@@ -1008,6 +1078,7 @@ float StageManager::GetPcDataProgress() const
 
 void StageManager::ResetStage()
 {
+    StopUploadSE();
     if (pPlayer_)
     {
         pPlayer_->ResetHoldState();

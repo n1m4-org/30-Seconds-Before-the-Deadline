@@ -20,7 +20,14 @@ public:
     /// </summary>
     /// <param name="progress">pcへのデータ送信進捗</param>
     /// <param name="remainingTime">ステージの残り制限時間(秒)</param>
-    void Update(float progress, float remainingTime);
+    /// <param name="isStage1_1">ステージ1-1かどうか (チュートリアルテキスト表示用)</param>
+    void Update(float progress, float remainingTime, bool isStage1_1 = false);
+
+    /// <summary>
+    /// ステージ1-1かどうかを設定
+    /// </summary>
+    /// <param name="isStage1_1">ステージ1-1フラグ</param>
+    void SetIsStage1_1(bool isStage1_1) { isStage1_1_ = isStage1_1; }
 
     /// <summary>
     /// 描画
@@ -36,6 +43,10 @@ private:
 		kTimelimitText,         // 4. 制限時間テキスト
 		kMoveExplanationText,   // 5. 移動説明テキスト
 		kClearText,             // 6. クリアテキスト
+		kTutoriaText,           // 7. チュートリアルテキスト
+		kUndoExplanationText,   // 8. アンドゥ説明テキスト
+		kResetExplanationText,  // 9. リセット説明テキスト
+		kPauseExplanationText,  // 10. ポーズ説明テキスト
 		kSpriteCount
 	};
 	std::array<std::unique_ptr<Sprite>, kSpriteCount> pUISprites_; // !< UIスプライト
@@ -47,5 +58,6 @@ private:
 
 	float progress_ = 0.0f; // pcへのデータ送信進捗
 	float remainingTime_ = 30.0f; // 残り制限時間
+	bool isStage1_1_ = false; // !< ステージ1-1フラグ (チュートリアルテキスト表示用)
 };
 

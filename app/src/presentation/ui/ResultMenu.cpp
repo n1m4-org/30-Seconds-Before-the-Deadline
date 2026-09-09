@@ -7,6 +7,7 @@
 #include <cmath>
 #include <algorithm>
 #include <string>
+#include <Features/Audio/AudioManager.h>
 
 ResultMenu::ResultMenu()
 {
@@ -20,6 +21,18 @@ void ResultMenu::Initialize()
 {
     TextureManager* tm = TextureManager::GetInstance();
     tm->LoadTexture(Path::Image::InGame::kTestTile); // game/tile/Simple.png をロード
+
+    // SE初期化
+    pChoiceAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kChoiceSE);
+    if (pChoiceAudio_)
+    {
+        pChoiceAudio_->SetVolume(0.12f);
+    }
+    pDecisionAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kDecisionSE);
+    if (pDecisionAudio_)
+    {
+        pDecisionAudio_->SetVolume(0.18f);
+    }
 
     // 1. 全画面半透明オーバーレイ
     pOverlaySprite_ = std::make_unique<Sprite>();
@@ -40,6 +53,17 @@ void ResultMenu::Initialize()
         pButtonSprites_[i]->Initialize(Path::Image::InGame::kTestTile);
         pButtonSprites_[i]->SetAnchorPoint({ 0.5f, 0.5f });
     }
+    pTextSprites_[0] = std::make_unique<Sprite>();
+    pTextSprites_[0]->Initialize(Path::Image::InGame::kNextStageText);
+    pTextSprites_[0]->SetAnchorPoint({ 0.5f, 0.5f });
+
+    pTextSprites_[1] = std::make_unique<Sprite>();
+    pTextSprites_[1]->Initialize(Path::Image::InGame::kLetsGoSelectText);
+    pTextSprites_[1]->SetAnchorPoint({ 0.5f, 0.5f });
+
+    pTextSprites_[2] = std::make_unique<Sprite>();
+    pTextSprites_[2]->Initialize(Path::Image::InGame::kLetsGoTitleText);
+    pTextSprites_[2]->SetAnchorPoint({ 0.5f, 0.5f });
 
     // 4. カーソルインジケーター
     pCursorSprite_ = std::make_unique<Sprite>();
@@ -64,7 +88,15 @@ void ResultMenu::Initialize()
 void ResultMenu::Open()
 {
     isOpen_ = true;
-    selectedIndex_ = kNextStage; // 開いた時は一番上の「次のステージへ」を選択
+    if (hasNextStage_)
+    {
+        selectedIndex_ = kNextStage; // 開いた時は一番上の「次のステージへ」を選択
+    }
+    else
+    {
+        selectedIndex_ = kStageSelect; // 開いた時は一番上の「ステージセレクトへ」を選択
+    }
+    
     currentAction_ = ResultMenuAction::None;
     animTimer_ = 0.0f;
     UpdateLayout();
@@ -107,55 +139,57 @@ void ResultMenu::Update(Input* pInput)
     {
         return;
     }
+    if (hasNextStage_)
+    {
+		headButtonIndex_ = 0; // 「次のステージへ」が表示される
+    }
+    else
+    {
+		headButtonIndex_ = 1; // 「ステージセレクトへ」が一番上に表示される
+    }
 
     animTimer_ += 0.05f;
 
     if (pInput)
     {
-        // 1. キーボード移動 (↑ 矢印キー または W キー)
-        if (pInput->TriggerKey(DIK_UP) || pInput->TriggerKey(DIK_W))
+        int prev = selectedIndex_;
+
+        if (hasNextStage_)
         {
-            selectedIndex_ = (selectedIndex_ + kItemCount - 1) % kItemCount;
-        }
-        // 下移動 (↓ 矢印キー または S キー)
-        else if (pInput->TriggerKey(DIK_DOWN) || pInput->TriggerKey(DIK_S))
-        {
-            selectedIndex_ = (selectedIndex_ + 1) % kItemCount;
-        }
-
-        // 2. マウスホバー & クリック判定
-        float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
-        float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 720);
-        Vector2 center = { screenW * 0.5f, screenH * 0.5f };
-
-        const float baseBtnW = 380.0f;
-        const float baseBtnH = 64.0f;
-        const float btnSpacing = 82.0f;
-        const float startY = center.y - btnSpacing;
-
-        POINT cursorPt = pInput->GetCursorPosition();
-        float mouseX = static_cast<float>(cursorPt.x);
-        float mouseY = static_cast<float>(cursorPt.y);
-
-        bool mouseClicked = pInput->TriggerMouse(Input::MouseNum::Left);
-
-        for (int i = 0; i < kItemCount; ++i)
-        {
-            float btnY = startY + static_cast<float>(i) * btnSpacing;
-            float left = center.x - baseBtnW * 0.5f;
-            float right = center.x + baseBtnW * 0.5f;
-            float top = btnY - baseBtnH * 0.5f;
-            float bottom = btnY + baseBtnH * 0.5f;
-
-            if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom)
+            // 1. キーボード移動 (↑ 矢印キー または W キー) [範囲: 0 ～ kItemCount - 1]
+            if (pInput->TriggerKey(DIK_UP) || pInput->TriggerKey(DIK_W))
             {
-                selectedIndex_ = i;
-                if (mouseClicked)
-                {
-                    TriggerActionByIndex(i);
-                    UpdateLayout();
-                    return;
-                }
+                selectedIndex_ = (selectedIndex_ + kItemCount - 1) % kItemCount;
+            }
+            // 下移動 (↓ 矢印キー または S キー)
+            else if (pInput->TriggerKey(DIK_DOWN) || pInput->TriggerKey(DIK_S))
+            {
+                selectedIndex_ = (selectedIndex_ + 1) % kItemCount;
+            }
+        }
+        else
+        {
+            const int count = kItemCount - 1; // 有効な要素数
+
+            // 1. キーボード移動 (↑ 矢印キー または W キー) [範囲: 1 ～ kItemCount - 1]
+            if (pInput->TriggerKey(DIK_UP) || pInput->TriggerKey(DIK_W))
+            {
+                // 0ベース(0～count-1)に変換して引いた後、1ベース(+1)に戻す
+                selectedIndex_ = ((selectedIndex_ - 1 + count - 1) % count) + 1;
+            }
+            // 下移動 (↓ 矢印キー または S キー)
+            else if (pInput->TriggerKey(DIK_DOWN) || pInput->TriggerKey(DIK_S))
+            {
+                // 0ベース(0～count-1)に変換して足した後、1ベース(+1)に戻す
+                selectedIndex_ = ((selectedIndex_ - 1 + 1) % count) + 1;
+            }
+        }
+
+        if (selectedIndex_ != prev)
+        {
+            if (pChoiceAudio_)
+            {
+                pChoiceAudio_->Play();
             }
         }
 
@@ -165,6 +199,10 @@ void ResultMenu::Update(Input* pInput)
             pInput->TriggerKey(DIK_NUMPADENTER) ||
             pInput->TriggerKey(DIK_Z))
         {
+            if (pDecisionAudio_)
+            {
+                pDecisionAudio_->Play();
+            }
             TriggerActionByIndex(selectedIndex_);
         }
     }
@@ -187,8 +225,8 @@ void ResultMenu::UpdateLayout()
     }
 
     // 2. パネル背景
-    const float panelW = 460.0f;
-    const float panelH = 370.0f;
+    const float panelW = 500.0f;
+    const float panelH = 500.0f;
     if (pPanelSprite_)
     {
         pPanelSprite_->SetPosition(center);
@@ -197,9 +235,9 @@ void ResultMenu::UpdateLayout()
     }
 
     // 3. ボタン配置
-    const float baseBtnW = 380.0f;
-    const float baseBtnH = 64.0f;
-    const float btnSpacing = 82.0f;
+    const float baseBtnW = 341.3f;
+    const float baseBtnH = 85.3f;
+    const float btnSpacing = 128.0f;
     const float startY = center.y - btnSpacing; // 3項目の中心合わせ (-82, 0, +82)
 
     // カラーパレット定義 (非選択 / 選択中ハイライト)
@@ -215,24 +253,26 @@ void ResultMenu::UpdateLayout()
         { 1.00f, 0.36f, 0.32f, 1.0f }   // 3. タイトルへ (発光コーラルレッド)
     };
 
-    for (int i = 0; i < kItemCount; ++i)
+    for (int i = headButtonIndex_; i < kItemCount; ++i)
     {
         if (pButtonSprites_[i])
         {
             Vector2 btnPos = { center.x, startY + static_cast<float>(i) * btnSpacing };
             pButtonSprites_[i]->SetPosition(btnPos);
+			pTextSprites_[i]->SetPosition(btnPos);
 
             if (i == selectedIndex_)
             {
                 // 選択中のボタン: 脈動ハイライト & 拡大
                 float pulse = 1.0f + 0.03f * std::sin(animTimer_ * 4.0f);
-                pButtonSprites_[i]->SetSize({ baseBtnW * pulse, baseBtnH * pulse });
+                pButtonSprites_[i]->SetSize({ (baseBtnW + 40.0f) * pulse, baseBtnH * pulse });
+				pTextSprites_[i]->SetSize({ baseBtnW * pulse, baseBtnH * pulse });
                 pButtonSprites_[i]->SetColor(kHighlightColors[i]);
 
                 // カーソルバーを左脇に配置
                 if (pCursorSprite_)
                 {
-                    Vector2 cursorOffset = { -(baseBtnW * 0.5f * pulse + 14.0f), 0.0f };
+                    Vector2 cursorOffset = { -((baseBtnW + 40.0f) * 0.5f * pulse + 14.0f), 0.0f };
                     pCursorSprite_->SetPosition({ btnPos.x + cursorOffset.x, btnPos.y });
                     pCursorSprite_->SetSize({ 10.0f, baseBtnH * 0.75f * pulse });
                     pCursorSprite_->Update();
@@ -240,11 +280,13 @@ void ResultMenu::UpdateLayout()
             }
             else
             {
-                pButtonSprites_[i]->SetSize({ baseBtnW, baseBtnH });
+                pButtonSprites_[i]->SetSize({ (baseBtnW + 40.0f), baseBtnH });
+				pTextSprites_[i]->SetSize({ baseBtnW, baseBtnH });
                 pButtonSprites_[i]->SetColor(kNormalColors[i]);
             }
 
             pButtonSprites_[i]->Update();
+			pTextSprites_[i]->Update();
         }
     }
 }
@@ -269,12 +311,16 @@ void ResultMenu::Draw()
     }
 
     // 3. メニューボタン
-    for (int i = 0; i < kItemCount; ++i)
+    for (int i = headButtonIndex_; i < kItemCount; ++i)
     {
         if (pButtonSprites_[i])
         {
             pButtonSprites_[i]->Draw1F();
         }
+		if (pTextSprites_[i])
+		{
+			pTextSprites_[i]->Draw1F();
+		}
     }
 
     // 4. カーソルインジケーター
@@ -289,7 +335,7 @@ void ResultMenu::Draw()
 		float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
 		float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 720);
 		Vector2 center = { screenW * 0.5f, screenH * 0.5f };
-		Vector2 clearPos = { center.x, center.y - 300.0f };
+		Vector2 clearPos = { center.x, center.y - 350.0f };
 		pClearSprite_->SetPosition(clearPos);
 		pClearSprite_->Update();
 		pClearSprite_->Draw1F();

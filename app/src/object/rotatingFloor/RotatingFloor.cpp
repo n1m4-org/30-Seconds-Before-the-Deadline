@@ -40,11 +40,11 @@ void RotatingFloor::Draw()
 	BaseObject2d::Draw();
 }
 
-void RotatingFloor::CheckAndRotateRepeater(const std::vector<std::unique_ptr<BaseObject2d>>& objects)
+bool RotatingFloor::CheckAndRotateRepeater(const std::vector<std::unique_ptr<BaseObject2d>>& objects)
 {
 	if (!isActive_)
 	{
-		return;
+		return false;
 	}
 
 	BaseObject2d* currentRepeaterOnFloor = nullptr;
@@ -85,6 +85,7 @@ void RotatingFloor::CheckAndRotateRepeater(const std::vector<std::unique_ptr<Bas
 
 			// 一度乗って回転したら、回転床自体が消滅する
 			isActive_ = false;
+			return true;
 		}
 	}
 	else
@@ -92,4 +93,6 @@ void RotatingFloor::CheckAndRotateRepeater(const std::vector<std::unique_ptr<Bas
 		// 中継器が離れた場合は占有状態を解除
 		pOccupyingRepeater_ = nullptr;
 	}
+
+	return false;
 }

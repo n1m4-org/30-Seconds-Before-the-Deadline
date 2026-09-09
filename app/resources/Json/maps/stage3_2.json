@@ -8,22 +8,6 @@
             "y": 1
         },
         {
-            "dirX": 0,
-            "dirY": 1,
-            "floorType": 0,
-            "type": 6,
-            "x": 2,
-            "y": 4
-        },
-        {
-            "dirX": 0,
-            "dirY": 1,
-            "floorType": 0,
-            "type": 6,
-            "x": 5,
-            "y": 4
-        },
-        {
             "dirX": 1,
             "dirY": 0,
             "type": 3,
@@ -50,6 +34,22 @@
             "type": 1,
             "x": 1,
             "y": 6
+        },
+        {
+            "dirX": 0,
+            "dirY": 1,
+            "floorType": 0,
+            "type": 6,
+            "x": 2,
+            "y": 4
+        },
+        {
+            "dirX": 0,
+            "dirY": 1,
+            "floorType": 0,
+            "type": 6,
+            "x": 5,
+            "y": 4
         }
     ],
     "tiles": [

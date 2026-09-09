@@ -115,6 +115,23 @@ namespace Path::Image
         inline constexpr const char* kMoveExplanationText = "game/ui/move_Explanation_UI.png";
         inline constexpr const char* kClearText = "game/ui/clear_text_UI.png";
 
+        inline constexpr const char* kResetExplanationText = "game/ui/reset_Explanation_UI.png";
+        inline constexpr const char* kUndoExplanationText = "game/ui/undo_Explanation_UI.png";
+        inline constexpr const char* kDefeatText = "game/ui/defeat_text_UI.png";
+        inline constexpr const char* kLetsGoSelectText = "game/ui/letsGoSelect_text.png";
+        inline constexpr const char* kLetsGoTitleText = "game/ui/letsGoTitle_text.png";
+        inline constexpr const char* kNextStageText = "game/ui/nextStage_text.png";
+        inline constexpr const char* kRetryText = "game/ui/retry_text.png";
+        inline constexpr const char* kReturnGameText = "game/ui/returnGame_text.png";
+        inline constexpr const char* kTutoriaText = "game/ui/tutoria_text.png";
+        inline constexpr const char* kGauge = "game/ui/gauge.png";
+		inline constexpr const char* kPauseExplanationText = "game/ui/pause_Explanation_text.png";
+		inline constexpr const char* kTitleText = "game/ui/title.png";
+
+        inline constexpr const char* kStartGame = "game/ui/goGame_text.png";
+        inline constexpr const char* kEndGame = "game/ui/exitGame_text.png";
+
+
         // マップタイル
         inline constexpr const char* kTestTile = "game/tile/Simple.png";
         inline constexpr const char* kTile = "game/tile/floor.png";
@@ -137,6 +154,7 @@ namespace Path::Image
             kL,
             kR,
             kT,
+            kW,
 			WallTypeCount
 		};
 
@@ -157,6 +175,7 @@ namespace Path::Image
             "game/walls/wall_end_L.png",  // kL
             "game/walls/wall_end_R.png",  // kR
             "game/walls/wall_end_T.png",  // kT
+            "game/walls/wall.png",        // kW
         };
 
 		// objects
@@ -193,8 +212,8 @@ namespace Path::Image
 namespace Path::Audio
 {
     /// [ BGM ]
-    inline constexpr const char* kBgmTitle = "bgm_title.wav";
-    inline constexpr const char* kBgmInGame = "bgm_ingame.wav";
+    inline constexpr const char* kBgmTitle = "TitleBGM.wav";
+    inline constexpr const char* kBgmInGame = "InGameBGM.wav";
 
     /// [ SE ]
     inline constexpr const char* kSeStartButton = "se_title_startbutton.wav";
@@ -204,6 +223,13 @@ namespace Path::Audio
     inline constexpr const char* kSePlayerSlowOff = "se_player_slow_off.wav";
     inline constexpr const char* kSeEnemyDeath = "se_enemy_death.wav";
     inline constexpr const char* kSeEnemyRusherAim = "se_enemyrusher_aim.wav";
+
+    inline constexpr const char* kChoiceSE = "choiceSE.wav";
+    inline constexpr const char* kDecisionSE = "decisionSE.wav";
+    inline constexpr const char* kDefeatSE = "defeatSE.wav";
+    inline constexpr const char* kFanfare = "fanfare.wav";
+    inline constexpr const char* kRotateSE = "rotateSE.wav";
+    inline constexpr const char* kUploadSE = "uploadSE.wav";
 
     namespace UI
     {

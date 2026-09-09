@@ -6,6 +6,7 @@
 #include <dinput.h>
 #include <cmath>
 #include <algorithm>
+#include <Features/Audio/AudioManager.h>
 
 PauseMenu::PauseMenu()
 {
@@ -19,6 +20,18 @@ void PauseMenu::Initialize()
 {
     TextureManager* tm = TextureManager::GetInstance();
     tm->LoadTexture(Path::Image::InGame::kTestTile); // game/tile/Simple.png をロード
+
+    // SE初期化
+    pChoiceAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kChoiceSE);
+    if (pChoiceAudio_)
+    {
+        pChoiceAudio_->SetVolume(0.12f);
+    }
+    pDecisionAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kDecisionSE);
+    if (pDecisionAudio_)
+    {
+        pDecisionAudio_->SetVolume(0.18f);
+    }
 
     // 1. 全画面半透明オーバーレイ
     pOverlaySprite_ = std::make_unique<Sprite>();
@@ -39,6 +52,17 @@ void PauseMenu::Initialize()
         pButtonSprites_[i]->Initialize(Path::Image::InGame::kTestTile);
         pButtonSprites_[i]->SetAnchorPoint({ 0.5f, 0.5f });
     }
+    pTextSprites_[0] = std::make_unique<Sprite>();
+    pTextSprites_[0]->Initialize(Path::Image::InGame::kReturnGameText);
+    pTextSprites_[0]->SetAnchorPoint({ 0.5f, 0.5f });
+
+    pTextSprites_[1] = std::make_unique<Sprite>();
+    pTextSprites_[1]->Initialize(Path::Image::InGame::kLetsGoSelectText);
+    pTextSprites_[1]->SetAnchorPoint({ 0.5f, 0.5f });
+
+    pTextSprites_[2] = std::make_unique<Sprite>();
+    pTextSprites_[2]->Initialize(Path::Image::InGame::kLetsGoTitleText);
+    pTextSprites_[2]->SetAnchorPoint({ 0.5f, 0.5f });
 
     // 4. カーソルインジケーター
     pCursorSprite_ = std::make_unique<Sprite>();
@@ -105,6 +129,8 @@ void PauseMenu::Update(Input* pInput)
 
     if (pInput)
     {
+        int prev = selectedIndex_;
+
         // 1. キーボード移動 (↑ 矢印キー または W キー)
         if (pInput->TriggerKey(DIK_UP) || pInput->TriggerKey(DIK_W))
         {
@@ -116,39 +142,11 @@ void PauseMenu::Update(Input* pInput)
             selectedIndex_ = (selectedIndex_ + 1) % kItemCount;
         }
 
-        // 2. マウスホバー & クリック判定
-        float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
-        float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 720);
-        Vector2 center = { screenW * 0.5f, screenH * 0.5f };
-
-        const float baseBtnW = 380.0f;
-        const float baseBtnH = 64.0f;
-        const float btnSpacing = 82.0f;
-        const float startY = center.y - btnSpacing;
-
-        POINT cursorPt = pInput->GetCursorPosition();
-        float mouseX = static_cast<float>(cursorPt.x);
-        float mouseY = static_cast<float>(cursorPt.y);
-
-        bool mouseClicked = pInput->TriggerMouse(Input::MouseNum::Left);
-
-        for (int i = 0; i < kItemCount; ++i)
+        if (selectedIndex_ != prev)
         {
-            float btnY = startY + static_cast<float>(i) * btnSpacing;
-            float left = center.x - baseBtnW * 0.5f;
-            float right = center.x + baseBtnW * 0.5f;
-            float top = btnY - baseBtnH * 0.5f;
-            float bottom = btnY + baseBtnH * 0.5f;
-
-            if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom)
+            if (pChoiceAudio_)
             {
-                selectedIndex_ = i;
-                if (mouseClicked)
-                {
-                    TriggerActionByIndex(i);
-                    UpdateLayout();
-                    return;
-                }
+                pChoiceAudio_->Play();
             }
         }
 
@@ -158,6 +156,10 @@ void PauseMenu::Update(Input* pInput)
             pInput->TriggerKey(DIK_NUMPADENTER) ||
             pInput->TriggerKey(DIK_Z))
         {
+            if (pDecisionAudio_)
+            {
+                pDecisionAudio_->Play();
+            }
             TriggerActionByIndex(selectedIndex_);
         }
     }
@@ -180,8 +182,8 @@ void PauseMenu::UpdateLayout()
     }
 
     // 2. パネル背景
-    const float panelW = 460.0f;
-    const float panelH = 370.0f;
+    const float panelW = 500.0f;
+    const float panelH = 500.0f;
     if (pPanelSprite_)
     {
         pPanelSprite_->SetPosition(center);
@@ -190,10 +192,10 @@ void PauseMenu::UpdateLayout()
     }
 
     // 3. ボタン配置
-    const float baseBtnW = 380.0f;
-    const float baseBtnH = 64.0f;
-    const float btnSpacing = 82.0f;
-    const float startY = center.y - btnSpacing; // 3項目の中心合わせ (-82, 0, +82)
+    const float baseBtnW = 341.3f;
+    const float baseBtnH = 85.3f;
+    const float btnSpacing = 128.0f;
+    const float startY = center.y - btnSpacing; // 3項目の中心合わせ
 
     // カラーパレット定義 (非選択 / 選択中ハイライト)
     static const Vector4 kNormalColors[kItemCount] = {
@@ -214,18 +216,20 @@ void PauseMenu::UpdateLayout()
         {
             Vector2 btnPos = { center.x, startY + static_cast<float>(i) * btnSpacing };
             pButtonSprites_[i]->SetPosition(btnPos);
+            pTextSprites_[i]->SetPosition(btnPos);
 
             if (i == selectedIndex_)
             {
                 // 選択中のボタン: 脈動ハイライト & 拡大
                 float pulse = 1.0f + 0.03f * std::sin(animTimer_ * 4.0f);
-                pButtonSprites_[i]->SetSize({ baseBtnW * pulse, baseBtnH * pulse });
+                pButtonSprites_[i]->SetSize({ (baseBtnW + 40.0f) * pulse, baseBtnH * pulse });
+                pTextSprites_[i]->SetSize({ baseBtnW * pulse, baseBtnH * pulse });
                 pButtonSprites_[i]->SetColor(kHighlightColors[i]);
 
                 // カーソルバーを左脇に配置
                 if (pCursorSprite_)
                 {
-                    Vector2 cursorOffset = { -(baseBtnW * 0.5f * pulse + 14.0f), 0.0f };
+                    Vector2 cursorOffset = { -((baseBtnW + 40.0f) * 0.5f * pulse + 14.0f), 0.0f };
                     pCursorSprite_->SetPosition({ btnPos.x + cursorOffset.x, btnPos.y });
                     pCursorSprite_->SetSize({ 10.0f, baseBtnH * 0.75f * pulse });
                     pCursorSprite_->Update();
@@ -233,11 +237,13 @@ void PauseMenu::UpdateLayout()
             }
             else
             {
-                pButtonSprites_[i]->SetSize({ baseBtnW, baseBtnH });
+                pButtonSprites_[i]->SetSize({ (baseBtnW + 40.0f), baseBtnH });
+                pTextSprites_[i]->SetSize({ baseBtnW, baseBtnH });
                 pButtonSprites_[i]->SetColor(kNormalColors[i]);
             }
 
             pButtonSprites_[i]->Update();
+            pTextSprites_[i]->Update();
         }
     }
 }
@@ -267,6 +273,7 @@ void PauseMenu::Draw()
         if (pButtonSprites_[i])
         {
             pButtonSprites_[i]->Draw1F();
+            pTextSprites_[i]->Draw1F();
         }
     }
 

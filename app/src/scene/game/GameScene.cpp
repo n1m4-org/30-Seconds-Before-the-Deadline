@@ -5,10 +5,13 @@
 #include <Core/DirectX12/TextureManager.h>
 #include <config/ResourcePath.h>
 #include <Features/Layer/CanvasScope.h>
+#include <Features/Audio/AudioManager.h>
 #include <Effects/SceneTransition/TransShutter.h>
+#include <Effects/PostEffects/Scanline/Scanline.h>
 #include <NiGui.h>
 #include <dinput.h>
 #include <any>
+#include <drawable/particle/ParticleStorage.h>
 
 void GameScene::Initialize()
 {
@@ -18,6 +21,8 @@ void GameScene::Initialize()
     pCubemapSystem_ = std::any_cast<CubemapSystem*>(pArgs_->Get("CubemapSystem"));
     pDx12_ = std::any_cast<DirectX12*>(pArgs_->Get("DirectX12"));
     pInputMapperUI_ = std::any_cast<InputMapper<InputActionUI>*>(pArgs_->Get("InputMapperUI"));
+    pModelManager_ = std::any_cast<ModelManager*>(pArgs_->Get("ModelManager"));
+
 	pInGameUI_ = std::make_unique<InGameUI>();
     pInGameUI_->Initialize();
 
@@ -34,10 +39,24 @@ void GameScene::Initialize()
 
         pCanvasBack_ = std::make_unique<Canvas>();
         pCanvasBack_->Initialize(params);
+        IPostEffect* scanline = pCanvasBack_->GetPostEffectExecutor().AddEffect(
+            PostEffectClassName::Scanline
+        );
+        scanline->Enable(true);
+        auto* concrete = static_cast<Scanline*>(scanline);
+        Scanline::ScanlineOption* options = &concrete->GetOption();
+		options->color0 = { 0.38f,0.38f,0.38f,1.0f };
+		options->color1 = { 0.29f,0.29f,0.29f,1.0f };
+        options->division = 25;
+        options->speed = 0.28f;
 
         params.name = "GameCanvasSprite";
         pCanvasSprite_ = std::make_unique<Canvas>();
         pCanvasSprite_->Initialize(params);
+
+        params.name = "GameCanvasParticle";
+        pCanvasParticle_ = std::make_unique<Canvas>();
+        pCanvasParticle_->Initialize(params);
 
 		params.name = "GameCanvasUI";
 		pCanvasUI_ = std::make_unique<Canvas>();
@@ -45,6 +64,7 @@ void GameScene::Initialize()
 
         pLayer_->AddCanvas(pCanvasBack_.get());
         pLayer_->AddCanvas(pCanvasSprite_.get());
+        pLayer_->AddCanvas(pCanvasParticle_.get());
         pLayer_->AddCanvas(pCanvasUI_.get());
     }
 
@@ -58,6 +78,14 @@ void GameScene::Initialize()
     pStageManager_ = std::make_unique<StageManager>();
     pStageManager_->Initialize();
 
+    // チュートリアルテキスト表示判定 (ステージ1-1のみ表示)
+    {
+        int w = 0, s = 0;
+        bool isStage1_1 = (pStageManager_->GetCurrentLoadedMapFile() == "stage1_1.json") ||
+                          (pStageManager_->ParseStageFileName(pStageManager_->GetCurrentLoadedMapFile(), w, s) && w == 1 && s == 1);
+        pInGameUI_->SetIsStage1_1(isStage1_1);
+    }
+
     // ポーズメニューの初期化
     pPauseMenu_ = std::make_unique<PauseMenu>();
     pPauseMenu_->Initialize();
@@ -70,27 +98,68 @@ void GameScene::Initialize()
     pTimeUpMenu_ = std::make_unique<TimeUpMenu>();
     pTimeUpMenu_->Initialize();
 
+    // パーティクルエミッターの初期化
+    this->InitializeParticleEmitter();
+
     isPaused_ = false;
     isResult_ = false;
     isTimeUp_ = false;
     isChangingScene_ = false;
+
+    pBgmAudio_ = AudioManager::GetInstance()->GetNewAudio("BGM", Path::Audio::kBgmInGame);
+    pBgmAudio_->SetVolume(0.075f);
+    pBgmAudio_->Play(true);
+
+    // SEの初期化
+    pDefeatAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kDefeatSE);
+    if (pDefeatAudio_)
+    {
+        pDefeatAudio_->SetVolume(0.20f);
+    }
+    pFanfareAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kFanfare);
+    if (pFanfareAudio_)
+    {
+        pFanfareAudio_->SetVolume(0.22f);
+    }
+}
+
+GameScene::~GameScene()
+{
+    Finalize();
 }
 
 void GameScene::Finalize()
 {
+    if (pStageManager_)
+    {
+        pStageManager_->StopUploadSE();
+        pStageManager_.reset();
+    }
+    if (pBgmAudio_)
+    {
+        pBgmAudio_->Stop();
+        pBgmAudio_ = nullptr;
+    }
     pTimeUpMenu_.reset();
     pResultMenu_.reset();
     pPauseMenu_.reset();
-    pStageManager_.reset();
     pSkybox_.reset();
 
-    gameEye_.reset();
-    pLayer_->RemoveCanvas(pCanvasBack_.get());
-    pLayer_->RemoveCanvas(pCanvasSprite_.get());
-	pLayer_->RemoveCanvas(pCanvasUI_.get());
-    pCanvasBack_->Finalize();
-    pCanvasSprite_->Finalize();
-    pCanvasUI_->Finalize();
+    pGameEye_.reset();
+
+    if (pLayer_)
+    {
+        if (pCanvasBack_) pLayer_->RemoveCanvas(pCanvasBack_.get());
+        if (pCanvasSprite_) pLayer_->RemoveCanvas(pCanvasSprite_.get());
+        if (pCanvasParticle_) pLayer_->RemoveCanvas(pCanvasParticle_.get());
+        if (pCanvasUI_) pLayer_->RemoveCanvas(pCanvasUI_.get());
+    }
+
+    if (pCanvasBack_) { pCanvasBack_->Finalize(); pCanvasBack_.reset(); }
+    if (pCanvasSprite_) { pCanvasSprite_->Finalize(); pCanvasSprite_.reset(); }
+    if (pCanvasParticle_) { pCanvasParticle_->Finalize(); pCanvasParticle_.reset(); }
+    if (pCanvasUI_) { pCanvasUI_->Finalize(); pCanvasUI_.reset(); }
+    if (pParticleEmitter_) { pParticleEmitter_->Finalize(); pParticleEmitter_.reset(); }
 }
 
 void GameScene::Update()
@@ -101,14 +170,20 @@ void GameScene::Update()
         return;
     }
 
+    pGameEye_->Update();
+
     // Escキーによるポーズメニューの開閉トグル (リザルト中・タイムアップ中以外)
-    if (pInput_ && !ImGui::GetIO().WantCaptureKeyboard && !isResult_ && !isTimeUp_)
+    if (pInput_ && !isResult_ && !isTimeUp_)
     {
         if (pInput_->TriggerKey(DIK_ESCAPE))
         {
             isPaused_ = !isPaused_;
             if (isPaused_)
             {
+                if (pStageManager_)
+                {
+                    pStageManager_->StopUploadSE();
+                }
                 pPauseMenu_->Open();
             }
             else
@@ -259,31 +334,52 @@ void GameScene::Update()
         if (pStageManager_)
         {
             pStageManager_->Update(pInput_);
-            pInGameUI_->Update(pStageManager_->GetPcDataProgress(), pStageManager_->GetRemainingTime());
+            int w = 0, s = 0;
+            bool isStage1_1 = (pStageManager_->GetCurrentLoadedMapFile() == "stage1_1.json") ||
+                              (pStageManager_->ParseStageFileName(pStageManager_->GetCurrentLoadedMapFile(), w, s) && w == 1 && s == 1);
+            pInGameUI_->Update(pStageManager_->GetPcDataProgress(), pStageManager_->GetRemainingTime(), isStage1_1);
 
             // ステージクリア時の処理 (Playモード時のみ)
             if (pStageManager_->IsCleared())
             {
-                isResult_ = true;
-                if (pResultMenu_)
+                if (!isResult_)
                 {
-                    pResultMenu_->SetHasNextStage(pStageManager_->HasNextStage());
-                    pResultMenu_->SetStageTitle(pStageManager_->GetCurrentStageDisplayName() + " CLEARED!");
-                    pResultMenu_->Open();
+                    isResult_ = true;
+                    pStageManager_->StopUploadSE();
+                    if (pFanfareAudio_)
+                    {
+                        pFanfareAudio_->Play();
+                    }
+                    if (pResultMenu_)
+                    {
+                        pResultMenu_->SetHasNextStage(pStageManager_->HasNextStage());
+                        pResultMenu_->SetStageTitle(pStageManager_->GetCurrentStageDisplayName() + " CLEARED!");
+                        pResultMenu_->Open();
+                    }
                 }
             }
             // 制限時間切れ (タイムアップ) 時の処理 (Playモード時のみ)
             else if (pStageManager_->IsTimeUp())
             {
-                isTimeUp_ = true;
-                if (pTimeUpMenu_)
+                if (!isTimeUp_)
                 {
-                    pTimeUpMenu_->SetStageTitle(pStageManager_->GetCurrentStageDisplayName());
-                    pTimeUpMenu_->Open();
+                    isTimeUp_ = true;
+                    pStageManager_->StopUploadSE();
+                    if (pDefeatAudio_)
+                    {
+                        pDefeatAudio_->Play();
+                    }
+                    if (pTimeUpMenu_)
+                    {
+                        pTimeUpMenu_->SetStageTitle(pStageManager_->GetCurrentStageDisplayName());
+                        pTimeUpMenu_->Open();
+                    }
                 }
             }
         }
     }
+
+    pParticleEmitter_->Update();
 }
 
 void GameScene::Draw()
@@ -295,6 +391,9 @@ void GameScene::Draw()
     {
         pStageManager_->Draw();
     }
+
+    CanvasScope canvasScopeParticle(pCanvasParticle_.get());
+    pParticle_->Draw1F();
 
     CanvasScope canvasScopeUI(pCanvasUI_.get());
 
@@ -326,17 +425,15 @@ void GameScene::Draw()
 void GameScene::InitializeGameEye()
 {
     /// ゲームアイの初期化
-    gameEye_ = std::make_unique<GameEye>();
-    gameEye_->SetName("gameEye");
-    gameEye_->SetTranslate(Vector3(0, 15.0f, -30.0f));
-    gameEye_->SetRotate(Vector3(-1.2f, 0, 0));
-    gameEye_->SetFov(1.2f);
+    pGameEye_ = std::make_unique<GameEye2d>();
+    pGameEye_->SetName("2d");
 
     /// ゲームアイをセット
-    Object3dSystem::GetInstance()->SetGlobalEye(gameEye_.get());
-    SpriteSystem::GetInstance()->SetGlobalEye(gameEye_.get());
-    LineSystem::GetInstance()->SetGlobalEye(gameEye_.get());
-    pCubemapSystem_->SetGlobalEye(gameEye_.get());
+    Object3dSystem::GetInstance()->SetGlobalEye(pGameEye_.get());
+    SpriteSystem::GetInstance()->SetGlobalEye(pGameEye_.get());
+    ParticleSystem::GetInstance()->SetGlobalEye(pGameEye_.get());
+    LineSystem::GetInstance()->SetGlobalEye(pGameEye_.get());
+    pCubemapSystem_->SetGlobalEye(pGameEye_.get());
 }
 
 void GameScene::InitializeSkybox()
@@ -349,4 +446,17 @@ void GameScene::InitializeSkybox()
     pSkybox_->SetSkyboxTexture(pTM->GetSrvHandleGPU(Path::Image::kTitleSkybox));
 
     pCanvasBack_->RegisterDrawable(pSkybox_.get());
+}
+
+void GameScene::InitializeParticleEmitter()
+{
+    IModel* pModel = pModelManager_->Load(Path::Model::kParticlePlane);
+    pParticle_ = ParticleStorage::GetInstance()->CreateParticle();
+    pParticle_->Initialize(pModel);
+
+    ParticleEmitter::Params params = {};
+    params.particle = pParticle_;
+
+    pParticleEmitter_ = std::make_unique<ParticleEmitter>();
+    pParticleEmitter_->Initialize(params);
 }
