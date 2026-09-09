@@ -20,7 +20,7 @@
 #include <presentation/ui/InGameUI.h>
 #include <memory>
 #include <drawable/particle/Emitter/ParticleEmitter.h>
-#include <Features/GameEye2d/GameEye2d.h>
+#include <Features/GameEye/GameEye2d.h>
 
 /// <summary>
 /// ゲームプレイシーン
@@ -64,17 +64,19 @@ private:
     std::unique_ptr<GameEye2d>  pGameEye_ = {};              // !< ゲームカメラ
     std::unique_ptr<Skybox>     pSkybox_ = nullptr;          // !< スカイボックス
 
-    std::unique_ptr<StageManager>       pStageManager_      = nullptr;      // !< ステージ管理クラス
-    std::unique_ptr<PauseMenu>          pPauseMenu_         = nullptr;      // !< ポーズメニュー
-    std::unique_ptr<ResultMenu>         pResultMenu_        = nullptr;      // !< リザルトメニュー
-    std::unique_ptr<TimeUpMenu>         pTimeUpMenu_        = nullptr;      // !< タイムアップメニュー
-    std::unique_ptr<InGameUI>           pInGameUI_          = nullptr;      // !< インゲームUI
-    std::unique_ptr<ParticleEmitter>    pParticleEmitter_   = nullptr;      // !< インゲームUI
-    Particle*                           pParticle_          = nullptr;      // !< インゲームUI
-    bool                                isPaused_           = false;        // !< ポーズ中フラグ
-    bool                                isResult_           = false;        // !< リザルト中フラグ
-    bool                                isTimeUp_           = false;        // !< タイムアップ中フラグ
-    bool                                isChangingScene_    = false;        // !< シーン遷移中フラグ
+    std::unique_ptr<StageManager>       pStageManager_          = nullptr;      // !< ステージ管理クラス
+    std::unique_ptr<PauseMenu>          pPauseMenu_             = nullptr;      // !< ポーズメニュー
+    std::unique_ptr<ResultMenu>         pResultMenu_            = nullptr;      // !< リザルトメニュー
+    std::unique_ptr<TimeUpMenu>         pTimeUpMenu_            = nullptr;      // !< タイムアップメニュー
+    std::unique_ptr<InGameUI>           pInGameUI_              = nullptr;      // !< インゲームUI
+    std::unique_ptr<ParticleEmitter>    pParticleEmitter_       = nullptr;      // !< パーティクルエミッター
+    std::unique_ptr<ParticleEmitter>    pParticleEmitterBack_   = nullptr;      // !< パーティクルエミッター
+    Particle*                           pParticle_              = nullptr;      // !< パーティクル
+    Particle*                           pParticleBack_          = nullptr;      // !< パーティクル
+    bool                                isPaused_               = false;        // !< ポーズ中フラグ
+    bool                                isResult_               = false;        // !< リザルト中フラグ
+    bool                                isTimeUp_               = false;        // !< タイムアップ中フラグ
+    bool                                isChangingScene_        = false;        // !< シーン遷移中フラグ
 
     Audio* pBgmAudio_ = nullptr; // !< BGMオーディオ
     Audio* pDefeatAudio_ = nullptr; // !< 時間切れSE (kDefeatSE)

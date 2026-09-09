@@ -12,6 +12,7 @@
 #include <dinput.h>
 #include <any>
 #include <drawable/particle/ParticleStorage.h>
+#include <Effects/PostEffects/GaussianBloom/GaussianBloom.h>
 
 void GameScene::Initialize()
 {
@@ -57,14 +58,26 @@ void GameScene::Initialize()
         params.name = "GameCanvasParticle";
         pCanvasParticle_ = std::make_unique<Canvas>();
         pCanvasParticle_->Initialize(params);
+        {
+            IPostEffect* pEffect = pCanvasParticle_->GetPostEffectExecutor().AddEffect(
+                PostEffectClassName::GaussianBloom
+            );
+            pEffect->Enable(true);
+            auto* pBloom = static_cast<GaussianBloom*>(pEffect);
+            pBloom->SetKernelSize(31);
+            pBloom->SetSigma(25.0f);
+            pBloom->SetThreshold(0.0f);
+            auto* pOption = &pBloom->GetOption();
+            pOption->bloomIntensity = 1.35f;
+        }
 
 		params.name = "GameCanvasUI";
 		pCanvasUI_ = std::make_unique<Canvas>();
 		pCanvasUI_->Initialize(params);
 
         pLayer_->AddCanvas(pCanvasBack_.get());
-        pLayer_->AddCanvas(pCanvasSprite_.get());
         pLayer_->AddCanvas(pCanvasParticle_.get());
+        pLayer_->AddCanvas(pCanvasSprite_.get());
         pLayer_->AddCanvas(pCanvasUI_.get());
     }
 
@@ -380,20 +393,22 @@ void GameScene::Update()
     }
 
     pParticleEmitter_->Update();
+    pParticleEmitterBack_->Update();
 }
 
 void GameScene::Draw()
 {
-    CanvasScope canvasScopeBack(pCanvasSprite_.get());
+    CanvasScope canvasScopeParticle(pCanvasParticle_.get());
+    // 背景用パーティクルの描画
+    pParticleBack_->Draw1F();
+    pParticle_->Draw1F();
 
+    CanvasScope canvasScopeMap(pCanvasSprite_.get());
     // 1. ステージの描画 (床・壁タイル、電波、配置オブジェクト)
     if (pStageManager_)
     {
         pStageManager_->Draw();
     }
-
-    CanvasScope canvasScopeParticle(pCanvasParticle_.get());
-    pParticle_->Draw1F();
 
     CanvasScope canvasScopeUI(pCanvasUI_.get());
 
@@ -454,9 +469,17 @@ void GameScene::InitializeParticleEmitter()
     pParticle_ = ParticleStorage::GetInstance()->CreateParticle();
     pParticle_->Initialize(pModel);
 
+    pParticleBack_ = ParticleStorage::GetInstance()->CreateParticle();
+    pParticleBack_->Initialize(pModel);
+
     ParticleEmitter::Params params = {};
     params.particle = pParticle_;
 
     pParticleEmitter_ = std::make_unique<ParticleEmitter>();
     pParticleEmitter_->Initialize(params);
+
+    params.particle = pParticleBack_;
+    params.jsonPath = "BackgroundParticle.json";
+    pParticleEmitterBack_ = std::make_unique<ParticleEmitter>();
+    pParticleEmitterBack_->Initialize(params);
 }

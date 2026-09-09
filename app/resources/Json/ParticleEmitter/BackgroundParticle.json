@@ -19,14 +19,14 @@
     "common": {
         "alphaDeltaValue": 0.0,
         "emitInterval": 0.2800000011920929,
-        "emitNum": 24,
+        "emitNum": 16,
         "emitPositionFixed": {
             "x": -37.0099983215332,
             "y": 2.140000104904175,
             "z": 0.0
         },
         "emitterLifeTime": 0.0,
-        "hueRotateSpeed": 0.003000000026077032,
+        "hueRotateSpeed": 0.10000000149011612,
         "particleLifeTime": 4.0,
         "radius": 0.0,
         "scaleDelayTime": 0.0,
@@ -79,20 +79,20 @@
             },
             "start": {
                 "w": 1.0,
-                "x": 0.9515511393547058,
-                "y": 0.7426160573959351,
-                "z": 1.0
+                "x": 0.573033332824707,
+                "y": 0.11465399712324142,
+                "z": 0.6793248653411865
             }
         },
         "position": {
             "end": {
-                "x": -260.0,
-                "y": -240.0,
+                "x": 800.0,
+                "y": 450.0,
                 "z": 0.0
             },
             "start": {
-                "x": 260.0,
-                "y": 240.0,
+                "x": -800.0,
+                "y": -450.0,
                 "z": 0.0
             }
         },
@@ -150,7 +150,7 @@
         }
     },
     "textureData": {
-        "texturePath": "EngineResources/Textures\\white1x1.png"
+        "texturePath": "EngineResources\\Textures\\white1x1.png"
     },
     "version": 3
 }

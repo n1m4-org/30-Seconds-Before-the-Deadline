@@ -23,7 +23,7 @@
 #include <logic/input/InputAction.h>
 #include <memory>
 #include <wrapper/InputAwareSprite.h>
-#include <Features/GameEye2d/GameEye2d.h>
+#include <Features/GameEye/GameEye2d.h>
 #include <drawable/particle/Emitter/ParticleEmitter.h>
 #include <drawable/particle/Particle.h>
 #include <scene/title/animation/PlayerPopupAnimation.h>
