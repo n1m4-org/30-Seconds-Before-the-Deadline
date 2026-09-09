@@ -28,6 +28,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\object\rotatingFloor\RotatingFloor.cpp" />
+    <ClCompile Include="src\presentation\ui\InGameUI.cpp" />
     <ClCompile Include="src\object\baseObject2d\BaseObject2d.cpp" />
     <ClCompile Include="src\object\player\Player.cpp" />
     <ClCompile Include="src\object\router\Router.cpp" />
@@ -45,9 +47,21 @@
     <ClCompile Include="src\scene\title\TitleScene.cpp" />
     <ClCompile Include="src\screen\factory\IntermediateScreenFactory.cpp" />
     <ClCompile Include="src\screen\loading\LoadingScreen.cpp" />
+    <ClCompile Include="src\presentation\ui\PauseMenu.cpp" />
+    <ClCompile Include="src\presentation\ui\ResultMenu.cpp" />
+    <ClCompile Include="src\presentation\ui\TimeUpMenu.cpp" />
+    <ClCompile Include="src\stage\StageManager.cpp" />
     <ClCompile Include="src\wrapper\InputAwareSprite.cpp" />
+    <ClCompile Include="src\scene\select\SelectScene.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\scene\select\SelectScene.h" />
+    <ClInclude Include="src\object\rotatingFloor\RotatingFloor.h" />
+    <ClInclude Include="src\presentation\ui\InGameUI.h" />
+    <ClInclude Include="src\presentation\ui\PauseMenu.h" />
+    <ClInclude Include="src\presentation\ui\ResultMenu.h" />
+    <ClInclude Include="src\presentation\ui\TimeUpMenu.h" />
+    <ClInclude Include="src\stage\StageManager.h" />
     <ClInclude Include="src\object\baseObject2d\BaseObject2d.h" />
     <ClInclude Include="src\object\player\Player.h" />
     <ClInclude Include="src\object\router\Router.h" />

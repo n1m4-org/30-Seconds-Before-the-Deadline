@@ -36,6 +36,7 @@ enum class ObjectType2d
 	kRepeater,
 	kAlumiWall,
 	kPC,
+	kRotatingFloor,
 	Count
 };
 
@@ -65,6 +66,9 @@ public:
 	bool IsDynamic() const { return isDynamic_; }
 	bool IsMoving() const { return isMoving_; }
 
+	void SetActive(bool active) { isActive_ = active; }
+	bool IsActive() const { return isActive_; }
+
 	// 向きベクトル(angle_)から回転ラジアン角を取得
 	float GetRotationAngleRad() const
 	{
@@ -75,12 +79,20 @@ public:
 		return 0.0f;
 	}
 
-	void ApplyRotationToSprite()
+	virtual void ApplyRotationToSprite()
 	{
 		if (pSprite_)
 		{
 			float rotationRad = GetRotationAngleRad();
 			pSprite_->SetRotation(rotationRad);
+		}
+	}
+
+	void ResetRotation()
+	{
+		if (pSprite_)
+		{
+			pSprite_->SetRotation(0.0f);
 		}
 	}
 
@@ -93,6 +105,7 @@ protected:
 	Vector2 size_ = { 100.0f, 100.0f };
 	ObjectType2d objectType_ = ObjectType2d::None;
 	bool isDynamic_ = false;
+	bool isActive_ = true;
 
 	// アニメーション移動用
 	bool isMoving_ = false;

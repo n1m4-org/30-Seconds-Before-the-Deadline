@@ -11,22 +11,16 @@
 #include <Features/Cubemap/CubemapSystem.h>
 #include <Features/Layer/Canvas.h>
 #include <Features/Input/InputMapper.hpp>
-#include <Features/Audio/Audio.h>
-#include <Math/ViewportUnits.hpp>
-#include <drawable/sprite/Sprite.h>
 #include <logic/input/InputAction.h>
-#include <Utility/JSONIO/JSONIO.h>
-#include <object/baseObject2d/BaseObject2d.h>
-#include <object/player/Player.h>
-#include <object/router/Router.h>
-#include <object/repeater/Repeater.h>
-#include <object/alumiWall/AlumiWall.h>
-#include <object/pc/PC.h>
-#include <logic/mapCollision/MapCollision.h>
-#include <logic/signal/SignalSystem.h>
+#include <stage/StageManager.h>
+#include <presentation/ui/PauseMenu.h>
+#include <presentation/ui/ResultMenu.h>
+#include <presentation/ui/TimeUpMenu.h>
+#include <presentation/ui/InGameUI.h>
+#include <memory>
 
 /// <summary>
-/// タイトルシーン
+/// ゲームプレイシーン
 /// </summary>
 class GameScene : public SceneBase
 {
@@ -53,59 +47,32 @@ public:
     /// </summary>
     void Draw() override;
 
-
 private:
     void InitializeGameEye();
-    void InitializeSprites();
     void InitializeSkybox();
 
-    void MapEdit();
-    void UpdateTileSprite(int x, int y);
-	void MapLoad(const std::string& path);
-	void MapSave(const std::string& path);
-	void UpdateCurrentMap();
-	void InitializeTestObjects();
+private:
+    std::unique_ptr<Canvas>     pCanvasBack_ = nullptr;      // !< 背景キャンバス
+    std::unique_ptr<Canvas>     pCanvasSprite_ = nullptr;    // !< スプライトキャンバス
+    std::unique_ptr<Canvas>     pCanvasUI_ = nullptr;        // !< UIキャンバス
+    std::unique_ptr<GameEye>    gameEye_ = {};               // !< ゲームカメラ
+    std::unique_ptr<Skybox>     pSkybox_ = nullptr;          // !< スカイボックス
 
+    std::unique_ptr<StageManager> pStageManager_ = nullptr;  // !< ステージ管理クラス
+    std::unique_ptr<PauseMenu>    pPauseMenu_ = nullptr;     // !< ポーズメニュー
+    std::unique_ptr<ResultMenu>   pResultMenu_ = nullptr;    // !< リザルトメニュー
+    std::unique_ptr<TimeUpMenu>   pTimeUpMenu_ = nullptr;    // !< タイムアップメニュー
+    std::unique_ptr<InGameUI>     pInGameUI_ = nullptr;      // !< インゲームUI
+    bool                          isPaused_ = false;         // !< ポーズ中フラグ
+    bool                          isResult_ = false;         // !< リザルト中フラグ
+    bool                          isTimeUp_ = false;         // !< タイムアップ中フラグ
+    bool                          isChangingScene_ = false;  // !< シーン遷移中フラグ
 
-	// 指定タイプのオブジェクトを作成し配置するヘルパー関数
-	BaseObject2d* CreateObject(ObjectType2d type, const Vector2Int& pos, const Vector2Int& dir = { 0, 1 });
-	// 指定座標にあるオブジェクトを削除する
-	void RemoveObjectAt(const Vector2Int& pos);
-
-    std::unique_ptr<Canvas>             pCanvasBack_ = nullptr;      // !< キャンバス
-    std::unique_ptr<Canvas>             pCanvasSprite_ = nullptr;      // !< キャンバス
-    std::unique_ptr<GameEye>            gameEye_ = {};           // !< ゲームアイ
-    std::unique_ptr<Skybox>             pSkybox_ = nullptr;      // !< スカイボックス
-    std::vector<std::vector<std::unique_ptr<Sprite>>> pSpriteTile_;         // !< タイル
-    std::vector<std::vector<std::unique_ptr<Sprite>>> pSignalSpriteTile_;   // !< 電波可視化用スプライト
-
-    std::vector<std::unique_ptr<BaseObject2d>> pMapObjects_;  // !< マップオブジェクト
-    Player* pPlayer_ = nullptr; // プレイヤーの参照キャッシュ
-
-    std::vector<std::vector<int>> mapData_;  // !< 地形マップデータ
-    std::vector<std::vector<int>> currentMap_;  // !< 現在のマップ（合成）
-    std::vector<std::vector<int>> signalStrengthMap_; // !< 各マスの電波強度 (0~10)
-    int pcReceivedStrength_ = 0;               // !< PCが受信した電波の強度
-    bool isPcConnected_ = false;               // !< PCに電波が届いているか
-    std::string savePath_ = "";                   // !< マップデータ保存先
-
-
-	Vector2 mapOffset_ = { 350.0f, 0.0f };   // !< マップのオフセット
-
-	float tileSize_ = 100.0f;   // !< タイルのサイズ
-	int mapWidth_ = 9;      // !< マップの幅
-	int mapHeight_ = 9;      // !< マップの高さ
-
-    MapCollision mapCollision_; // !< 衝突・押し出し判定
-    SignalSystem signalSystem_; // !< 電波伝搬システム
-
-
-    /// 他クラスのインスタンス
-    PostEffectExecutor* pPostEffectExecutor_ = nullptr;      // !< ポストエフェクト実行クラス
-    DirectX12* pDx12_ = nullptr;      // !< DirectX12
-    Input* pInput_ = nullptr;      // !< 入力
-    SceneManager* pSceneManager_ = nullptr;      // !< シーン遷移
-    CubemapSystem* pCubemapSystem_ = nullptr;      // !< キューブマップシステム
-    InputMapper<InputActionUI>* pInputMapperUI_ = nullptr;      // !< 入力マッパー
-	JSONIO* pJSONIO_ = nullptr;      // !< JSONIO
+    /// 他クラスのインスタンス参照
+    PostEffectExecutor* pPostEffectExecutor_ = nullptr;
+    DirectX12* pDx12_ = nullptr;
+    Input* pInput_ = nullptr;
+    SceneManager* pSceneManager_ = nullptr;
+    CubemapSystem* pCubemapSystem_ = nullptr;
+    InputMapper<InputActionUI>* pInputMapperUI_ = nullptr;
 };

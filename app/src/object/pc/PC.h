@@ -17,6 +17,10 @@ public:
 	float GetDataProgress() const { return dataProgress_; }
 	bool IsCleared() const { return isCleared_; }
 	void ResetProgress() { dataProgress_ = 0.0f; isCleared_ = false; }
+	void SetProgress(float progress, bool isCleared) { dataProgress_ = progress; isCleared_ = isCleared; }
+
+	// PCは向きによる回転を行わない（常に正立）
+	void ApplyRotationToSprite() override { ResetRotation(); }
 
 private:
 	bool isSignalReceived_ = false;

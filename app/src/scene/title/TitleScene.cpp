@@ -80,9 +80,11 @@ void TitleScene::Finalize()
     gameEye_.reset();
     pLayer_->RemoveCanvas(pCanvasBack_.get());
     pLayer_->RemoveCanvas(pCanvasSprite_.get());
+    pLayer_->RemoveCanvas(pCanvasWorld_.get());
     pCanvasBack_->Finalize();
     pCanvasSprite_->Finalize();
-    pParticleEmitter_->Finalize();
+	pCanvasWorld_->Finalize();
+    pParticleEmitter_->Finalize();;
 }
 
 void TitleScene::Update()
@@ -297,6 +299,6 @@ void TitleScene::ChangeToGameScene()
     pSoundStartButton_->Play();
     pRadialBeat_->Start(1.0f);
     pTransShutter_ = std::make_unique<TransShutter>();
-    pSceneManager_->ReserveScene("GameScene", std::move(pTransShutter_));
+    pSceneManager_->ReserveScene("SelectScene", std::move(pTransShutter_));
     isChangingScene_ = true;
 }

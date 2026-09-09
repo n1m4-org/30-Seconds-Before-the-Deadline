@@ -78,6 +78,9 @@ namespace Path::Image
     /// [ ローディング画面 ]
     inline constexpr const char* kLoading = "load/NOWLOADING.dds";
 
+    // 数字
+	inline constexpr const char* kUINumbers = "game/ui/number_x96y128.png";
+
     /// [ インゲーム ]
     namespace InGame
     {
@@ -101,6 +104,15 @@ namespace Path::Image
 
         inline constexpr const char* kScoreUpRate2 = "game/x2.png";
         inline constexpr const char* kScoreUpRate3 = "game/x3.png";
+
+
+        // UI
+        inline constexpr const char* kProgressBar = "game/ui/progressBar.png";
+        inline constexpr const char* kProgressBarFrame = "game/ui/progressBar_frame.png";
+        inline constexpr const char* kProgressBarText = "game/ui/progressBar_text.png";
+        inline constexpr const char* kTimelimitText = "game/ui/timelimit_text.png";
+        inline constexpr const char* kMoveExplanationText = "game/ui/move_Explanation_UI.png";
+        inline constexpr const char* kClearText = "game/ui/clear_text_UI.png";
 
         // マップタイル
         inline constexpr const char* kTestTile = "game/tile/Simple.png";
@@ -150,6 +162,19 @@ namespace Path::Image
 		inline constexpr const char* kRouter = "game/objects/router.png";
 		inline constexpr const char* kRepeater = "game/objects/repeater.png";
 		inline constexpr const char* kPC = "game/objects/PC.png";
+        inline constexpr const char* kAluminum = "game/objects/aluminum.png";
+
+		enum class RotatingFloorType
+		{
+            kRight,
+			kLeft,
+			RotatingFloorTypeCount
+		};
+        inline constexpr const char* kRotatingFloors[static_cast<std::size_t>(RotatingFloorType::RotatingFloorTypeCount)] =
+        { 
+            "game/objects/rotating_floor_R.png", 
+            "game/objects/rotating_floor_L.png" 
+        };
     }
 
 
