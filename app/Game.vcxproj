@@ -43,8 +43,9 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\presentation\animation\RadialBeat.cpp" />
     <ClCompile Include="src\scene\factory\SceneFactory.cpp" />
-    <ClCompile Include="src\scene\title\animation\OpeningAnimation.cpp" />
+    <ClCompile Include="src\scene\title\animation\PlayerPopupAnimation.cpp" />
     <ClCompile Include="src\scene\title\TitleScene.cpp" />
+    <ClCompile Include="src\scene\title\ui\TitleMenu.cpp" />
     <ClCompile Include="src\screen\factory\IntermediateScreenFactory.cpp" />
     <ClCompile Include="src\screen\loading\LoadingScreen.cpp" />
     <ClCompile Include="src\presentation\ui\PauseMenu.cpp" />
@@ -78,8 +79,10 @@
     <ClInclude Include="src\logic\input\InputAction.h" />
     <ClInclude Include="src\presentation\animation\RadialBeat.h" />
     <ClInclude Include="src\scene\factory\SceneFactory.h" />
-    <ClInclude Include="src\scene\title\animation\OpeningAnimation.h" />
+    <ClInclude Include="src\scene\title\animation\PlayerPopupAnimation.h" />
+    <ClInclude Include="src\scene\title\animation\TitleAnimation.h" />
     <ClInclude Include="src\scene\title\TitleScene.h" />
+    <ClInclude Include="src\scene\title\ui\TitleMenu.h" />
     <ClInclude Include="src\screen\factory\IntermediateScreenFactory.h" />
     <ClInclude Include="src\screen\loading\LoadingScreen.h" />
     <ClInclude Include="src\wrapper\InputAwareSprite.h" />
@@ -129,7 +132,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_AMD64_</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_AMD64_;NOMINMAX</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -156,7 +159,7 @@ xcopy /E /I /Y "$(ProjectDir)..\module\NimaEngine\src\EngineResources" "$(Projec
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_AMD64_</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_AMD64_;NOMINMAX</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>

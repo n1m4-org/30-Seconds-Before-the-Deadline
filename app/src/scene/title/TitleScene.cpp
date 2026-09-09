@@ -37,54 +37,23 @@ void TitleScene::Initialize()
     // スプライトの初期化
     this->InitializeSprites();
 
-    /// フィルタの初期化と登録
-    {
-        auto tempBloom = pCanvasBack_->GetPostEffectExecutor().AddEffect(PostEffectClassName::GaussianBloom);
-        auto tempGaussian = pCanvasBack_->GetPostEffectExecutor().AddEffect(PostEffectClassName::SeparatedGaussianFilter);
-        auto tempMosaic = pCanvasBack_->GetPostEffectExecutor().AddEffect(PostEffectClassName::Mosaic);
-        auto tempRadial = pCanvasBack_->GetPostEffectExecutor().AddEffect(PostEffectClassName::RadialBlur);
-        tempRadial->Enable(true);
-        pGaussianBloom_ = static_cast<GaussianBloom*>(tempBloom);
-        pMosaic_ = static_cast<Mosaic*>(tempMosaic);
-        pSeparatedGaussianFilter_ = static_cast<SeparatedGaussianFilter*>(tempGaussian);
-
-        auto radial = static_cast<RadialBlur*>(tempRadial);
-        radial->SetBlurWidth(0.0f);
-        pRadialBeat_ = std::make_unique<RadialBeat>();
-        pRadialBeat_->Initialize(radial);
-        pRadialBeat_->SetMaxWidth(0.02f);
-    }
-
-    this->InitializePostEffects();
-
-    pSoundStartButton_ = AudioManager::GetInstance()->GetNewAudio("Effect", Path::Audio::kSeStartButton);
-    pSoundStartButton_->SetVolume(0.1f);
-
-    pSoundBGM_ = AudioManager::GetInstance()->GetNewAudio("BGM", Path::Audio::kBgmTitle);
-    pSoundBGM_->SetVolume(0.075f);
-    pSoundBGM_->Play(true);
-
     // パーティクルエミッタの初期化
     this->InitializeParticleEmitter();
 
-    // オープニングアニメーションの初期化と再生
-    // - 実時間をもとに再生されるためPlay関数のあとに時間のかかる処理(I/O など)を入れないこと
-    pOpeningAnimation_ = std::make_unique<OpeningAnimation>();
-    pOpeningAnimation_->Initialize();
-    pOpeningAnimation_->Play();
+    pPlayerPopupAnimation_ = std::make_unique<PlayerPopupAnimation>();
+    pPlayerPopupAnimation_->Initialize();
 }
 
 void TitleScene::Finalize()
 {
-    pSoundBGM_->Stop();
     gameEye_.reset();
     pLayer_->RemoveCanvas(pCanvasBack_.get());
     pLayer_->RemoveCanvas(pCanvasSprite_.get());
     pLayer_->RemoveCanvas(pCanvasWorld_.get());
     pCanvasBack_->Finalize();
     pCanvasSprite_->Finalize();
-	pCanvasWorld_->Finalize();
-    pParticleEmitter_->Finalize();;
+    pCanvasWorld_->Finalize();
+    pParticleEmitter_->Finalize();
 }
 
 void TitleScene::Update()
@@ -98,35 +67,14 @@ void TitleScene::Update()
 
     gameEye_->Update();
 
-    float threshold = std::lerp(kBloomThresholdMin_, 0.5f, Math::Easing::EaseInOutSine(t));
-    pGaussianBloom_->SetThreshold(threshold);
-
-    t = (std::sinf(eyeRotate.y * 20.0f) + 1.0f) / 2.0f; // 0から1の範囲で変化する値
-    float kernelSize = std::lerp(3.0f, 31.0f, Math::Easing::EaseInOutQuad(t));
-    pSeparatedGaussianFilter_->GetOption().kernelSize = static_cast<int>(kernelSize);
-    pSeparatedGaussianFilter_->CreateKernel();
-
-    
     if (pInputMapperUI_->IsRelease(InputActionUI::Confirm) && !isChangingScene_)
     {
         this->ChangeToGameScene();
     }
 
-    if (isChangingScene_)
-    {
-        pSoundBGM_->SetVolume(pSoundBGM_->GetVolume() * 0.95f);
-    }
-
-    this->UpdateTitleAnimation();
-    this->UpdateStartPromptAnimation();
-
-    pSkybox_->Update();
-    pSpriteTitle_->Update();
-    pSpriteFrameScreen_->Update();
-    pSpritePressStart_->Update();
-    pOpeningAnimation_->Update();
-    pRadialBeat_->Update();
     pParticleEmitter_->Update();
+
+    pPlayerPopupAnimation_->Update();
 }
 
 void TitleScene::Draw()
@@ -135,10 +83,7 @@ void TitleScene::Draw()
     pParticle_->Draw1F();
 
     CanvasScope canvasScopeUI(pCanvasSprite_.get());
-    pSpriteFrameScreen_->Draw1F();
-    pSpriteTitle_->Draw1F();
-    pSpritePressStart_->Draw1F();
-    pOpeningAnimation_->Draw1F();
+    pPlayerPopupAnimation_->Draw1F();
 }
 
 void TitleScene::InitializeGameEye()
@@ -157,73 +102,12 @@ void TitleScene::InitializeGameEye()
 
 void TitleScene::InitializeSprites()
 {
-    /// AwareSpriteの方を先に初期化
-    pInputAwareSprite_ = std::make_unique<InputAwareSprite>();
-    pInputAwareSprite_->Initialize();
-
-    /// タイトルテキストの初期化
-    pSpriteTitle_ = std::make_unique<Sprite>();
-    pSpriteTitle_->Initialize(Path::Image::kTitle);
-    pSpriteTitle_->SetName("Title");
-    pSpriteTitle_->SetAnchorPoint({ 0.5f, 0.5f });
-
-    pSpriteTitle_->SetPosition({ 50.0_vw, 50.0_vh - 50.0f});
-
-    /// フレームスクリーンの初期化
-    pSpriteFrameScreen_ = std::make_unique<Sprite>();
-    pSpriteFrameScreen_->Initialize(Path::Image::kFrameScreen);
-    pSpriteFrameScreen_->SetName("FrameScreen");
-    pSpriteFrameScreen_->SetAnchorPoint({ 0.5f, 0.5f });
-    pSpriteFrameScreen_->SetPosition({ 50.0_vw, 50.0_vh });
-    pSpriteFrameScreen_->SetSize({ 100.0_vw, 100.0_vh });
-    pSpriteFrameScreen_->SetColor(RGBA(0x101010ff).to_Vector4());
-
-    /// 開始プロンプトの初期化
-    pSpritePressStart_ = std::make_unique<Sprite>();
-    pSpritePressStart_->Initialize(Path::Image::kTitleStartPromptSpaceKey);
-    pSpritePressStart_->SetName("PressStart");
-    pSpritePressStart_->SetAnchorPoint({ 0.5f, 0.5f });
-    pSpritePressStart_->SetPosition({ 50.0_vw, 50.0_vh + 200.0f });
-    pSpritePressStart_->SetSizeWithFactor(1.05f);
-
-    TextureManager* tm = TextureManager::GetInstance();
-    tm->LoadTexture(Path::Image::kTitleStartPromptSpaceKey);
-    tm->LoadTexture(Path::Image::kTitleStartPromptButtonA);
-
-    InputAwareSprite::Entry entry = {};
-    entry.pSprite_ = pSpritePressStart_.get();
-    entry.handleKeyboard_ = TextureManager::GetInstance()->GetSrvHandleGPU(Path::Image::kTitleStartPromptSpaceKey);
-    entry.handleGamepad_ = TextureManager::GetInstance()->GetSrvHandleGPU(Path::Image::kTitleStartPromptButtonA);
-
-    pInputAwareSprite_->AddEntry(entry);
-    pInputAwareSprite_->ApplyCurrentMode();
 }
 
 void TitleScene::InitializeSkybox()
 {
     auto pTM = TextureManager::GetInstance();
     pTM->LoadTexture(Path::Image::kTitleSkybox);
-
-    pSkybox_ = std::make_unique<Skybox>();
-    pSkybox_->Initialize(pCubemapSystem_);
-    pSkybox_->SetSkyboxTexture(pTM->GetSrvHandleGPU(Path::Image::kTitleSkybox));
-
-    pCanvasBack_->RegisterDrawable(pSkybox_.get());
-}
-
-void TitleScene::InitializePostEffects()
-{
-    pGaussianBloom_->Enable(true);
-    pSeparatedGaussianFilter_->Enable(true);
-    pMosaic_->Enable(true);
-
-    pGaussianBloom_->SetKernelSize(31);
-    pGaussianBloom_->SetSigma(27.9f);
-    pGaussianBloom_->SetThreshold(0.313f);
-    pGaussianBloom_->SetBloomIntensity(2.14f);
-
-    pSeparatedGaussianFilter_->SetSigma(27.0f);
-    pMosaic_->GetOption().power = 200.0f;
 }
 
 void TitleScene::InitializeParticleEmitter()
@@ -267,37 +151,8 @@ void TitleScene::InitializeCanvas()
     pLayer_->AddCanvas(pCanvasSprite_.get());
 }
 
-void TitleScene::UpdateTitleAnimation()
-{
-    static float t = 0.0f;
-    float x = pSpriteTitle_->GetPosition().x;
-    float y = kPosYTitle_ + std::sinf(t) * 5.0f;
-    pSpriteTitle_->SetPosition(Vector2(x, y));
-    t += 0.04f;
-}
-
-void TitleScene::UpdateStartPromptAnimation()
-{
-    // FIX: 別クラスを立ててUIアニメーションを管理する
-    static float t = 0.0f;
-    opacityStartPrompt_ = (std::sinf(t) + 1.5f) / 3.0f;
-    t += 0.04f;
-    pSpritePressStart_->SetColor(Vector4(1.0f, 1.0f, 1.0f, opacityStartPrompt_));
-
-    if (pInputMapperUI_->IsPush(InputActionUI::Confirm))
-    {
-        pSpritePressStart_->SetSizeWithFactor(kPressSpaceScaleActive_);
-    }
-    else
-    {
-        pSpritePressStart_->SetSizeWithFactor(1.05f);
-    }
-}
-
 void TitleScene::ChangeToGameScene()
 {
-    pSoundStartButton_->Play();
-    pRadialBeat_->Start(1.0f);
     pTransShutter_ = std::make_unique<TransShutter>();
     pSceneManager_->ReserveScene("SelectScene", std::move(pTransShutter_));
     isChangingScene_ = true;

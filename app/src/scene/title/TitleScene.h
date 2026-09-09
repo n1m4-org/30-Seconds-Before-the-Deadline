@@ -20,13 +20,14 @@
 #include <Math/ViewportUnits.hpp>
 #include <drawable/sprite/Sprite.h>
 #include <presentation/animation/RadialBeat.h>
-#include "./Animation/OpeningAnimation.h"
 #include <logic/input/InputAction.h>
 #include <memory>
 #include <wrapper/InputAwareSprite.h>
 #include <Features/GameEye2d/GameEye2d.h>
 #include <drawable/particle/Emitter/ParticleEmitter.h>
 #include <drawable/particle/Particle.h>
+#include <scene/title/animation/PlayerPopupAnimation.h>
+#include <Features/Animation/AnimationEditor.hpp>
 
 /// <summary>
 /// タイトルシーン
@@ -61,19 +62,8 @@ private:
     void InitializeGameEye();
     void InitializeSprites();
     void InitializeSkybox();
-    void InitializePostEffects();
     void InitializeParticleEmitter();
     void InitializeCanvas();
-
-    /// <summary>
-    /// タイトルロゴのアニメーション更新を行います。
-    /// </summary>
-    void UpdateTitleAnimation();
-
-    /// <summary>
-    /// 「Press Start」等の開始プロンプトのアニメーション更新を行います。
-    /// </summary>
-    void UpdateStartPromptAnimation();
 
     /// <summary>
     /// ゲームシーンに切り替える処理を行います。
@@ -91,19 +81,8 @@ private:
     std::unique_ptr<Canvas>             pCanvasSprite_              = nullptr;      // !< タイトルキャンバス
     std::unique_ptr<Canvas>             pCanvasWorld_               = nullptr;      // !< タイトルキャンバス
     std::unique_ptr<GameEye2d>          gameEye_                    = {};           // !< ゲームアイ
-    std::unique_ptr<Sprite>             pSpriteTitle_               = nullptr;      // !< タイトル
-    std::unique_ptr<Sprite>             pSpriteFrameScreen_         = nullptr;      // !< タイトル
-    std::unique_ptr<Sprite>             pSpritePressStart_          = nullptr;      // !< メニュー
-    std::unique_ptr<Skybox>             pSkybox_                    = nullptr;      // !< スカイボックス
-    std::unique_ptr<OpeningAnimation>   pOpeningAnimation_          = nullptr;      // !< オープニングアニメーション
-    float                               opacityStartPrompt_         = 0.0f;         // !< スタートプロンプトの不透明度
-    GaussianBloom*                      pGaussianBloom_             = nullptr;      // !< ガウスぼかし
-    SeparatedGaussianFilter*            pSeparatedGaussianFilter_   = nullptr;      // !< 分離ガウスフィルタ
-    Mosaic*                             pMosaic_                    = nullptr;      // !< モザイク
-    Audio*                              pSoundStartButton_          = nullptr;      // !< スタートボタン音声
-    Audio*                              pSoundBGM_                  = nullptr;      // !< BGM音声
-    std::unique_ptr<RadialBeat>         pRadialBeat_                = nullptr;      // !< 放射状ブラービート
-    std::unique_ptr<InputAwareSprite>   pInputAwareSprite_          = nullptr;      // !< 入力デバイスによって自動切り替え可能なスプライト
+    std::unique_ptr<PlayerPopupAnimation> pPlayerPopupAnimation_    = nullptr;      // !< プレイヤーポップアップアニメーション
+
     std::unique_ptr<ParticleEmitter>    pParticleEmitter_           = nullptr;      // !< パーティクルエミッター
     Particle*                           pParticle_                  = nullptr;      // !< パーティクル
 

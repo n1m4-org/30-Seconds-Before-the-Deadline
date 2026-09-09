@@ -61,7 +61,7 @@ private:
 
     const float     kSmoothFactor_ = 0.1f;
     const float     kWaitTime_ = 1.0f;
-    TimeMeasurer    waitTimer_ = {};
+    HiResoStopWatch    waitTimer_ = {};
     
     std::unique_ptr<Canvas>     pCanvasScanline_            = nullptr; // !< 背景キャンバス
     std::unique_ptr<Canvas>     pCanvas_                    = nullptr; // !< ロードシーン用キャンバス
