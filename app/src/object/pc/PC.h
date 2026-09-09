@@ -16,6 +16,7 @@ public:
 
 	float GetDataProgress() const { return dataProgress_; }
 	bool IsCleared() const { return isCleared_; }
+	bool IsUploading() const { return isSignalReceived_ && signalStrength_ > 0 && !isCleared_; }
 	void ResetProgress() { dataProgress_ = 0.0f; isCleared_ = false; }
 	void SetProgress(float progress, bool isCleared) { dataProgress_ = progress; isCleared_ = isCleared; }
 

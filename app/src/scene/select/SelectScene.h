@@ -84,6 +84,7 @@ private:
     float                       currentScrollY_ = 0.0f;
     float                       targetScrollY_  = 0.0f;
     bool                        isChangingScene_= false;
-
     Audio* pBgmAudio_ = nullptr; // !< BGMオーディオ
+    Audio* pChoiceAudio_ = nullptr; // !< カーソル移動SE (kChoiceSE)
+    Audio* pDecisionAudio_ = nullptr; // !< 決定SE (kDecisionSE)
 };

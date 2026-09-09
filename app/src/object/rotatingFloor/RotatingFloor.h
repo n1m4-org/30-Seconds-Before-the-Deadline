@@ -28,10 +28,11 @@ public:
 	RotatingFloorType GetRotatingFloorType() const { return rotatingFloorType_; }
 
 	/// <summary>
-	/// 同じマスに新しく乗った中継器を検知し、一度だけ90度回転させる
+	/// 同じマスに新しく乗った中継器を検知し、一度だけ90度回転させる (回転が発生した場合はtrueを返す)
 	/// </summary>
 	/// <param name="objects">全オブジェクトリスト</param>
-	void CheckAndRotateRepeater(const std::vector<std::unique_ptr<BaseObject2d>>& objects);
+	/// <returns>回転が行われたかどうか</returns>
+	bool CheckAndRotateRepeater(const std::vector<std::unique_ptr<BaseObject2d>>& objects);
 
 private:
 	RotatingFloorType rotatingFloorType_ = RotatingFloorType::kRight;

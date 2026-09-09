@@ -70,6 +70,8 @@ private:
     bool                          isChangingScene_ = false;  // !< シーン遷移中フラグ
 
     Audio* pBgmAudio_ = nullptr; // !< BGMオーディオ
+    Audio* pDefeatAudio_ = nullptr; // !< 時間切れSE (kDefeatSE)
+    Audio* pFanfareAudio_ = nullptr; // !< クリアファンファーレSE (kFanfare)
 
     /// 他クラスのインスタンス参照
     PostEffectExecutor* pPostEffectExecutor_ = nullptr;

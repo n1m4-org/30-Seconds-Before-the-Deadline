@@ -7,6 +7,7 @@
 #include <cmath>
 #include <algorithm>
 #include <string>
+#include <Features/Audio/AudioManager.h>
 
 ResultMenu::ResultMenu()
 {
@@ -20,6 +21,18 @@ void ResultMenu::Initialize()
 {
     TextureManager* tm = TextureManager::GetInstance();
     tm->LoadTexture(Path::Image::InGame::kTestTile); // game/tile/Simple.png をロード
+
+    // SE初期化
+    pChoiceAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kChoiceSE);
+    if (pChoiceAudio_)
+    {
+        pChoiceAudio_->SetVolume(0.12f);
+    }
+    pDecisionAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kDecisionSE);
+    if (pDecisionAudio_)
+    {
+        pDecisionAudio_->SetVolume(0.18f);
+    }
 
     // 1. 全画面半透明オーバーレイ
     pOverlaySprite_ = std::make_unique<Sprite>();
@@ -139,6 +152,8 @@ void ResultMenu::Update(Input* pInput)
 
     if (pInput)
     {
+        int prev = selectedIndex_;
+
         if (hasNextStage_)
         {
             // 1. キーボード移動 (↑ 矢印キー または W キー) [範囲: 0 ～ kItemCount - 1]
@@ -170,41 +185,13 @@ void ResultMenu::Update(Input* pInput)
             }
         }
 
-        // 2. マウスホバー & クリック判定
-        /*float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
-        float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 720);
-        Vector2 center = { screenW * 0.5f, screenH * 0.5f };
-
-        const float baseBtnW = 341.3f + 40.0f;
-        const float baseBtnH = 85.3f;
-        const float btnSpacing = 128.0f;
-        const float startY = center.y - btnSpacing;
-
-        POINT cursorPt = pInput->GetCursorPosition();
-        float mouseX = static_cast<float>(cursorPt.x);
-        float mouseY = static_cast<float>(cursorPt.y);
-
-        bool mouseClicked = pInput->TriggerMouse(Input::MouseNum::Left);
-
-        for (int i = 0; i < kItemCount; ++i)
+        if (selectedIndex_ != prev)
         {
-            float btnY = startY + static_cast<float>(i) * btnSpacing;
-            float left = center.x - baseBtnW * 0.5f;
-            float right = center.x + baseBtnW * 0.5f;
-            float top = btnY - baseBtnH * 0.5f;
-            float bottom = btnY + baseBtnH * 0.5f;
-
-            if (mouseX >= left && mouseX <= right && mouseY >= top && mouseY <= bottom)
+            if (pChoiceAudio_)
             {
-                selectedIndex_ = i;
-                if (mouseClicked)
-                {
-                    TriggerActionByIndex(i);
-                    UpdateLayout();
-                    return;
-                }
+                pChoiceAudio_->Play();
             }
-        }*/
+        }
 
         // 3. キーボード決定 (Space, Enter, テンキーEnter, Z キー)
         if (pInput->TriggerKey(DIK_SPACE) || 
@@ -212,6 +199,10 @@ void ResultMenu::Update(Input* pInput)
             pInput->TriggerKey(DIK_NUMPADENTER) ||
             pInput->TriggerKey(DIK_Z))
         {
+            if (pDecisionAudio_)
+            {
+                pDecisionAudio_->Play();
+            }
             TriggerActionByIndex(selectedIndex_);
         }
     }

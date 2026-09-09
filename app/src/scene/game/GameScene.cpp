@@ -98,10 +98,26 @@ void GameScene::Initialize()
     pBgmAudio_ = AudioManager::GetInstance()->GetNewAudio("BGM", Path::Audio::kBgmInGame);
     pBgmAudio_->SetVolume(0.075f);
     pBgmAudio_->Play(true);
+
+    // SEの初期化
+    pDefeatAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kDefeatSE);
+    if (pDefeatAudio_)
+    {
+        pDefeatAudio_->SetVolume(0.20f);
+    }
+    pFanfareAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kFanfare);
+    if (pFanfareAudio_)
+    {
+        pFanfareAudio_->SetVolume(0.22f);
+    }
 }
 
 void GameScene::Finalize()
 {
+    if (pStageManager_)
+    {
+        pStageManager_->StopUploadSE();
+    }
     pBgmAudio_->Stop();
     pTimeUpMenu_.reset();
     pResultMenu_.reset();
@@ -134,6 +150,10 @@ void GameScene::Update()
             isPaused_ = !isPaused_;
             if (isPaused_)
             {
+                if (pStageManager_)
+                {
+                    pStageManager_->StopUploadSE();
+                }
                 pPauseMenu_->Open();
             }
             else
@@ -292,22 +312,38 @@ void GameScene::Update()
             // ステージクリア時の処理 (Playモード時のみ)
             if (pStageManager_->IsCleared())
             {
-                isResult_ = true;
-                if (pResultMenu_)
+                if (!isResult_)
                 {
-                    pResultMenu_->SetHasNextStage(pStageManager_->HasNextStage());
-                    pResultMenu_->SetStageTitle(pStageManager_->GetCurrentStageDisplayName() + " CLEARED!");
-                    pResultMenu_->Open();
+                    isResult_ = true;
+                    pStageManager_->StopUploadSE();
+                    if (pFanfareAudio_)
+                    {
+                        pFanfareAudio_->Play();
+                    }
+                    if (pResultMenu_)
+                    {
+                        pResultMenu_->SetHasNextStage(pStageManager_->HasNextStage());
+                        pResultMenu_->SetStageTitle(pStageManager_->GetCurrentStageDisplayName() + " CLEARED!");
+                        pResultMenu_->Open();
+                    }
                 }
             }
             // 制限時間切れ (タイムアップ) 時の処理 (Playモード時のみ)
             else if (pStageManager_->IsTimeUp())
             {
-                isTimeUp_ = true;
-                if (pTimeUpMenu_)
+                if (!isTimeUp_)
                 {
-                    pTimeUpMenu_->SetStageTitle(pStageManager_->GetCurrentStageDisplayName());
-                    pTimeUpMenu_->Open();
+                    isTimeUp_ = true;
+                    pStageManager_->StopUploadSE();
+                    if (pDefeatAudio_)
+                    {
+                        pDefeatAudio_->Play();
+                    }
+                    if (pTimeUpMenu_)
+                    {
+                        pTimeUpMenu_->SetStageTitle(pStageManager_->GetCurrentStageDisplayName());
+                        pTimeUpMenu_->Open();
+                    }
                 }
             }
         }

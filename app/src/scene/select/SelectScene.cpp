@@ -62,6 +62,18 @@ void SelectScene::Initialize()
     pBgmAudio_ = AudioManager::GetInstance()->GetNewAudio("BGM", Path::Audio::kBgmTitle);
     pBgmAudio_->SetVolume(0.075f);
     pBgmAudio_->Play(true);
+
+    // SE初期化
+    pChoiceAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kChoiceSE);
+    if (pChoiceAudio_)
+    {
+        pChoiceAudio_->SetVolume(0.12f);
+    }
+    pDecisionAudio_ = AudioManager::GetInstance()->GetNewAudio("SE", Path::Audio::kDecisionSE);
+    if (pDecisionAudio_)
+    {
+        pDecisionAudio_->SetVolume(0.18f);
+    }
 }
 
 void SelectScene::Finalize()
@@ -316,6 +328,7 @@ void SelectScene::UpdateInput()
     if (stageCards_.empty()) return;
 
     int curIdx = selectedIndex_;
+    int prevIdx = selectedIndex_;
     const auto& curCard = stageCards_[curIdx];
 
     // [D] / [→]: 次のステージへ
@@ -387,9 +400,22 @@ void SelectScene::UpdateInput()
         }
     }
 
+    // カーソル移動SE再生
+    if (selectedIndex_ != prevIdx)
+    {
+        if (pChoiceAudio_)
+        {
+            pChoiceAudio_->Play();
+        }
+    }
+
     // [Space] / [Enter]: 決定 (ゲーム開始)
     if (pInput_->TriggerKey(DIK_SPACE) || pInput_->TriggerKey(DIK_RETURN))
     {
+        if (pDecisionAudio_)
+        {
+            pDecisionAudio_->Play();
+        }
         isChangingScene_ = true;
 
         // 選択されたステージのファイル名をセット
