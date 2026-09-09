@@ -19,7 +19,7 @@
 #include <presentation/ui/InGameUI.h>
 #include <memory>
 #include <drawable/particle/Emitter/ParticleEmitter.h>
-#include <Features/GameEye/GameEye2d.h>
+#include <Features/GameEye2d/GameEye2d.h>
 
 /// <summary>
 /// ゲームプレイシーン
