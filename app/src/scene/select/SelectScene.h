@@ -7,7 +7,7 @@
 #include <Features/Cubemap/CubemapSystem.h>
 #include <Features/Layer/Canvas.h>
 #include <drawable/sprite/Sprite.h>
-#include <Features/GameEye2d/GameEye2d.h>
+#include <Features/GameEye/GameEye2d.h>
 #include <memory>
 #include <vector>
 #include <string>

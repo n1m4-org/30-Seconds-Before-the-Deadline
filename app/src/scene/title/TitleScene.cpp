@@ -58,13 +58,6 @@ void TitleScene::Finalize()
 
 void TitleScene::Update()
 {
-    Vector3 eyeRotate = gameEye_->GetRotation();
-    eyeRotate.y += 0.001f;
-
-    float t = (std::sinf(eyeRotate.y * 10.0f) + 1.0f) / 2.0f; // 0から1の範囲で変化する値
-    Vector3 eyePos = gameEye_->GetPosition();
-    eyePos.z = std::lerp(kEyePosZMin_, kEyePosZMax_, Math::Easing::EaseInOutSine(t));
-
     gameEye_->Update();
 
     if (pInputMapperUI_->IsRelease(InputActionUI::Confirm) && !isChangingScene_)

@@ -72,7 +72,6 @@ void SelectScene::InitializeGameEye()
 {
     pGameEye_ = std::make_unique<GameEye2d>();
     pGameEye_->SetName("SelectSceneGameEye");
-    SpriteSystem::GetInstance()->SetGlobalEye(pGameEye_.get());
 }
 
 void SelectScene::InitializeCanvas()

@@ -18,6 +18,8 @@
 #include <presentation/ui/TimeUpMenu.h>
 #include <presentation/ui/InGameUI.h>
 #include <memory>
+#include <drawable/particle/Emitter/ParticleEmitter.h>
+#include <Features/GameEye/GameEye2d.h>
 
 /// <summary>
 /// ゲームプレイシーン
@@ -50,23 +52,27 @@ public:
 private:
     void InitializeGameEye();
     void InitializeSkybox();
+    void InitializeParticleEmitter();
 
 private:
     std::unique_ptr<Canvas>     pCanvasBack_ = nullptr;      // !< 背景キャンバス
     std::unique_ptr<Canvas>     pCanvasSprite_ = nullptr;    // !< スプライトキャンバス
+    std::unique_ptr<Canvas>     pCanvasParticle_ = nullptr;  // !< スプライトキャンバス
     std::unique_ptr<Canvas>     pCanvasUI_ = nullptr;        // !< UIキャンバス
-    std::unique_ptr<GameEye>    gameEye_ = {};               // !< ゲームカメラ
+    std::unique_ptr<GameEye2d>  pGameEye_ = {};              // !< ゲームカメラ
     std::unique_ptr<Skybox>     pSkybox_ = nullptr;          // !< スカイボックス
 
-    std::unique_ptr<StageManager> pStageManager_ = nullptr;  // !< ステージ管理クラス
-    std::unique_ptr<PauseMenu>    pPauseMenu_ = nullptr;     // !< ポーズメニュー
-    std::unique_ptr<ResultMenu>   pResultMenu_ = nullptr;    // !< リザルトメニュー
-    std::unique_ptr<TimeUpMenu>   pTimeUpMenu_ = nullptr;    // !< タイムアップメニュー
-    std::unique_ptr<InGameUI>     pInGameUI_ = nullptr;      // !< インゲームUI
-    bool                          isPaused_ = false;         // !< ポーズ中フラグ
-    bool                          isResult_ = false;         // !< リザルト中フラグ
-    bool                          isTimeUp_ = false;         // !< タイムアップ中フラグ
-    bool                          isChangingScene_ = false;  // !< シーン遷移中フラグ
+    std::unique_ptr<StageManager>       pStageManager_      = nullptr;      // !< ステージ管理クラス
+    std::unique_ptr<PauseMenu>          pPauseMenu_         = nullptr;      // !< ポーズメニュー
+    std::unique_ptr<ResultMenu>         pResultMenu_        = nullptr;      // !< リザルトメニュー
+    std::unique_ptr<TimeUpMenu>         pTimeUpMenu_        = nullptr;      // !< タイムアップメニュー
+    std::unique_ptr<InGameUI>           pInGameUI_          = nullptr;      // !< インゲームUI
+    std::unique_ptr<ParticleEmitter>    pParticleEmitter_   = nullptr;      // !< インゲームUI
+    Particle*                           pParticle_          = nullptr;      // !< インゲームUI
+    bool                                isPaused_           = false;        // !< ポーズ中フラグ
+    bool                                isResult_           = false;        // !< リザルト中フラグ
+    bool                                isTimeUp_           = false;        // !< タイムアップ中フラグ
+    bool                                isChangingScene_    = false;        // !< シーン遷移中フラグ
 
     /// 他クラスのインスタンス参照
     PostEffectExecutor* pPostEffectExecutor_ = nullptr;
@@ -74,5 +80,6 @@ private:
     Input* pInput_ = nullptr;
     SceneManager* pSceneManager_ = nullptr;
     CubemapSystem* pCubemapSystem_ = nullptr;
+    ModelManager* pModelManager_ = nullptr;
     InputMapper<InputActionUI>* pInputMapperUI_ = nullptr;
 };

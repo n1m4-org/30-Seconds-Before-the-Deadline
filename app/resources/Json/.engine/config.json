@@ -4,7 +4,7 @@
             "screen_height": 900,
             "screen_width": 1600,
             "start_scene": "TitleScene",
-            "window_title": "4009_30 Seconds Before the Deadline"
+            "window_title": "4009_期限30秒前"
         },
         "particle_emitter": {
             "default_config_filename": ""
