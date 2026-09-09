@@ -7,6 +7,7 @@
 #include <Features/Layer/CanvasScope.h>
 #include <Features/Audio/AudioManager.h>
 #include <Effects/SceneTransition/TransShutter.h>
+#include <Effects/PostEffects/Scanline/Scanline.h>
 #include <NiGui.h>
 #include <dinput.h>
 #include <any>
@@ -35,6 +36,16 @@ void GameScene::Initialize()
 
         pCanvasBack_ = std::make_unique<Canvas>();
         pCanvasBack_->Initialize(params);
+        IPostEffect* scanline = pCanvasBack_->GetPostEffectExecutor().AddEffect(
+            PostEffectClassName::Scanline
+        );
+        scanline->Enable(true);
+        auto* concrete = static_cast<Scanline*>(scanline);
+        Scanline::ScanlineOption* options = &concrete->GetOption();
+		options->color0 = { 0.38f,0.38f,0.38f,1.0f };
+		options->color1 = { 0.29f,0.29f,0.29f,1.0f };
+        options->division = 25;
+        options->speed = 0.28f;
 
         params.name = "GameCanvasSprite";
         pCanvasSprite_ = std::make_unique<Canvas>();
@@ -58,6 +69,14 @@ void GameScene::Initialize()
     // ステージ管理クラスの初期化
     pStageManager_ = std::make_unique<StageManager>();
     pStageManager_->Initialize();
+
+    // チュートリアルテキスト表示判定 (ステージ1-1のみ表示)
+    {
+        int w = 0, s = 0;
+        bool isStage1_1 = (pStageManager_->GetCurrentLoadedMapFile() == "stage1_1.json") ||
+                          (pStageManager_->ParseStageFileName(pStageManager_->GetCurrentLoadedMapFile(), w, s) && w == 1 && s == 1);
+        pInGameUI_->SetIsStage1_1(isStage1_1);
+    }
 
     // ポーズメニューの初期化
     pPauseMenu_ = std::make_unique<PauseMenu>();
@@ -265,7 +284,10 @@ void GameScene::Update()
         if (pStageManager_)
         {
             pStageManager_->Update(pInput_);
-            pInGameUI_->Update(pStageManager_->GetPcDataProgress(), pStageManager_->GetRemainingTime());
+            int w = 0, s = 0;
+            bool isStage1_1 = (pStageManager_->GetCurrentLoadedMapFile() == "stage1_1.json") ||
+                              (pStageManager_->ParseStageFileName(pStageManager_->GetCurrentLoadedMapFile(), w, s) && w == 1 && s == 1);
+            pInGameUI_->Update(pStageManager_->GetPcDataProgress(), pStageManager_->GetRemainingTime(), isStage1_1);
 
             // ステージクリア時の処理 (Playモード時のみ)
             if (pStageManager_->IsCleared())

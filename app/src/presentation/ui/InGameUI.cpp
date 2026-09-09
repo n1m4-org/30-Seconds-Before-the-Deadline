@@ -70,9 +70,9 @@ void InGameUI::Initialize()
 
 	pUISprites_[kTutoriaText] = std::make_unique<Sprite>();
 	pUISprites_[kTutoriaText]->Initialize(Path::Image::InGame::kTutoriaText);
-	pUISprites_[kTutoriaText]->SetAnchorPoint({ 0.0f, 0.5f }); // 左端を基準にする
-	pUISprites_[kTutoriaText]->SetPosition({ 8.0f, 200.0f }); // チュートリアルテキストの位置を設定
-	pUISprites_[kTutoriaText]->SetSize(pUISprites_[kTutoriaText]->GetSize() / 1.5f); // 初期サイズを設定
+	pUISprites_[kTutoriaText]->SetAnchorPoint({ 0.5f, 0.5f }); // 中心を基準にする
+	pUISprites_[kTutoriaText]->SetPosition({ 800.0f, 150.0f }); // チュートリアルテキストの位置を設定
+	pUISprites_[kTutoriaText]->SetSize(pUISprites_[kTutoriaText]->GetSize()); // 初期サイズを設定
 
 	pUISprites_[kUndoExplanationText] = std::make_unique<Sprite>();
 	pUISprites_[kUndoExplanationText]->Initialize(Path::Image::InGame::kUndoExplanationText);
@@ -93,10 +93,11 @@ void InGameUI::Initialize()
 	pUISprites_[kPauseExplanationText]->SetSize(pUISprites_[kPauseExplanationText]->GetSize() / 1.5f); // 初期サイズを設定
 }
 
-void InGameUI::Update(float progress, float remainingTime)
+void InGameUI::Update(float progress, float remainingTime, bool isStage1_1)
 {
 	progress_ = progress;
 	remainingTime_ = remainingTime;
+	isStage1_1_ = isStage1_1;
 
 	// 進捗バーのサイズを更新
 	if (pUISprites_[kProgressBar])
@@ -159,6 +160,11 @@ void InGameUI::Draw()
 			{
 				index++;
 				continue; // 進捗テキストは条件付きで描画
+			}
+			if (sprite == pUISprites_[kTutoriaText] && !isStage1_1_)
+			{
+				index++;
+				continue; // チュートリアルテキストは1-1のみ表示
 			}
 			sprite->Draw1F();
 		}
