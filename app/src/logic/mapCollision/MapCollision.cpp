@@ -50,6 +50,15 @@ bool MapCollision::TryMove(const std::vector<std::vector<int>>& currentMap,
 				subject.Move(dir);
 				return true;
 			}
+			else if (nextNextType == 2)
+			{
+				// 押し出し先がさらに動的オブジェクトの場合、再帰的に押し出しを試みる
+				if (TryMove(currentMap, objects, *pushedObj, dir))
+				{
+					subject.Move(dir);
+					return true;
+				}
+			}
 		}
 		// 押し出し先が詰まっているため移動不可
 		return false;

@@ -137,6 +137,7 @@ namespace Path::Image
             kL,
             kR,
             kT,
+            kW,
 			WallTypeCount
 		};
 
@@ -157,6 +158,7 @@ namespace Path::Image
             "game/walls/wall_end_L.png",  // kL
             "game/walls/wall_end_R.png",  // kR
             "game/walls/wall_end_T.png",  // kT
+            "game/walls/wall.png",        // kW
         };
 
 		// objects

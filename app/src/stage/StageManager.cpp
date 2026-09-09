@@ -354,8 +354,8 @@ Path::Image::InGame::WallType StageManager::CalculateAutoWallType(int x, int y) 
     if (IsWall(x, y + 1)) mask |= kDirBottom;
 
     using namespace Path::Image::InGame;
-    static const WallType kMaskToWallType[16] = {
-        WallType::kT,    // 0: 孤立壁 -> wall_end_T (指定仕様)
+    static const WallType kMaskToWallType[static_cast<size_t>(WallType::WallTypeCount)] = {
+        WallType::kW,    // 0: 孤立壁 W
         WallType::kL,    // 1: L
         WallType::kR,    // 2: R
         WallType::kRL,   // 3: L + R
