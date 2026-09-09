@@ -75,7 +75,15 @@ void ResultMenu::Initialize()
 void ResultMenu::Open()
 {
     isOpen_ = true;
-    selectedIndex_ = kNextStage; // 開いた時は一番上の「次のステージへ」を選択
+    if (hasNextStage_)
+    {
+        selectedIndex_ = kNextStage; // 開いた時は一番上の「次のステージへ」を選択
+    }
+    else
+    {
+        selectedIndex_ = kStageSelect; // 開いた時は一番上の「ステージセレクトへ」を選択
+    }
+    
     currentAction_ = ResultMenuAction::None;
     animTimer_ = 0.0f;
     UpdateLayout();
@@ -118,20 +126,48 @@ void ResultMenu::Update(Input* pInput)
     {
         return;
     }
+    if (hasNextStage_)
+    {
+		headButtonIndex_ = 0; // 「次のステージへ」が表示される
+    }
+    else
+    {
+		headButtonIndex_ = 1; // 「ステージセレクトへ」が一番上に表示される
+    }
 
     animTimer_ += 0.05f;
 
     if (pInput)
     {
-        // 1. キーボード移動 (↑ 矢印キー または W キー)
-        if (pInput->TriggerKey(DIK_UP) || pInput->TriggerKey(DIK_W))
+        if (hasNextStage_)
         {
-            selectedIndex_ = (selectedIndex_ + kItemCount - 1) % kItemCount;
+            // 1. キーボード移動 (↑ 矢印キー または W キー) [範囲: 0 ～ kItemCount - 1]
+            if (pInput->TriggerKey(DIK_UP) || pInput->TriggerKey(DIK_W))
+            {
+                selectedIndex_ = (selectedIndex_ + kItemCount - 1) % kItemCount;
+            }
+            // 下移動 (↓ 矢印キー または S キー)
+            else if (pInput->TriggerKey(DIK_DOWN) || pInput->TriggerKey(DIK_S))
+            {
+                selectedIndex_ = (selectedIndex_ + 1) % kItemCount;
+            }
         }
-        // 下移動 (↓ 矢印キー または S キー)
-        else if (pInput->TriggerKey(DIK_DOWN) || pInput->TriggerKey(DIK_S))
+        else
         {
-            selectedIndex_ = (selectedIndex_ + 1) % kItemCount;
+            const int count = kItemCount - 1; // 有効な要素数
+
+            // 1. キーボード移動 (↑ 矢印キー または W キー) [範囲: 1 ～ kItemCount - 1]
+            if (pInput->TriggerKey(DIK_UP) || pInput->TriggerKey(DIK_W))
+            {
+                // 0ベース(0～count-1)に変換して引いた後、1ベース(+1)に戻す
+                selectedIndex_ = ((selectedIndex_ - 1 + count - 1) % count) + 1;
+            }
+            // 下移動 (↓ 矢印キー または S キー)
+            else if (pInput->TriggerKey(DIK_DOWN) || pInput->TriggerKey(DIK_S))
+            {
+                // 0ベース(0～count-1)に変換して足した後、1ベース(+1)に戻す
+                selectedIndex_ = ((selectedIndex_ - 1 + 1) % count) + 1;
+            }
         }
 
         // 2. マウスホバー & クリック判定
@@ -226,7 +262,7 @@ void ResultMenu::UpdateLayout()
         { 1.00f, 0.36f, 0.32f, 1.0f }   // 3. タイトルへ (発光コーラルレッド)
     };
 
-    for (int i = 0; i < kItemCount; ++i)
+    for (int i = headButtonIndex_; i < kItemCount; ++i)
     {
         if (pButtonSprites_[i])
         {
@@ -284,7 +320,7 @@ void ResultMenu::Draw()
     }
 
     // 3. メニューボタン
-    for (int i = 0; i < kItemCount; ++i)
+    for (int i = headButtonIndex_; i < kItemCount; ++i)
     {
         if (pButtonSprites_[i])
         {

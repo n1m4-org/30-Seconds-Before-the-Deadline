@@ -91,6 +91,7 @@ private:
     bool hasNextStage_ = true;
     std::string stageTitle_ = "";
     int selectedIndex_ = 0;
+	int headButtonIndex_ = 0; // !< 表示されるボタンの先頭インデックス
     ResultMenuAction currentAction_ = ResultMenuAction::None;
 
     std::unique_ptr<Sprite> pOverlaySprite_ = nullptr; // !< 画面全体の半透明暗幕

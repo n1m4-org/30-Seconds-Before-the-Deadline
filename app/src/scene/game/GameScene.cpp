@@ -108,7 +108,7 @@ void GameScene::Update()
     }
 
     // Escキーによるポーズメニューの開閉トグル (リザルト中・タイムアップ中以外)
-    if (pInput_ && !ImGui::GetIO().WantCaptureKeyboard && !isResult_ && !isTimeUp_)
+    if (pInput_ && !isResult_ && !isTimeUp_)
     {
         if (pInput_->TriggerKey(DIK_ESCAPE))
         {
