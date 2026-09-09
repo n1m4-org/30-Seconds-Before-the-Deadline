@@ -11,6 +11,7 @@
 #include <NiGui.h>
 #include <dinput.h>
 #include <any>
+#include <drawable/particle/ParticleStorage.h>
 
 void GameScene::Initialize()
 {
@@ -20,6 +21,8 @@ void GameScene::Initialize()
     pCubemapSystem_ = std::any_cast<CubemapSystem*>(pArgs_->Get("CubemapSystem"));
     pDx12_ = std::any_cast<DirectX12*>(pArgs_->Get("DirectX12"));
     pInputMapperUI_ = std::any_cast<InputMapper<InputActionUI>*>(pArgs_->Get("InputMapperUI"));
+    pModelManager_ = std::any_cast<ModelManager*>(pArgs_->Get("ModelManager"));
+
 	pInGameUI_ = std::make_unique<InGameUI>();
     pInGameUI_->Initialize();
 
@@ -51,12 +54,17 @@ void GameScene::Initialize()
         pCanvasSprite_ = std::make_unique<Canvas>();
         pCanvasSprite_->Initialize(params);
 
+        params.name = "GameCanvasParticle";
+        pCanvasParticle_ = std::make_unique<Canvas>();
+        pCanvasParticle_->Initialize(params);
+
 		params.name = "GameCanvasUI";
 		pCanvasUI_ = std::make_unique<Canvas>();
 		pCanvasUI_->Initialize(params);
 
         pLayer_->AddCanvas(pCanvasBack_.get());
         pLayer_->AddCanvas(pCanvasSprite_.get());
+        pLayer_->AddCanvas(pCanvasParticle_.get());
         pLayer_->AddCanvas(pCanvasUI_.get());
     }
 
@@ -89,6 +97,9 @@ void GameScene::Initialize()
     // タイムアップメニューの初期化
     pTimeUpMenu_ = std::make_unique<TimeUpMenu>();
     pTimeUpMenu_->Initialize();
+
+    // パーティクルエミッターの初期化
+    this->InitializeParticleEmitter();
 
     isPaused_ = false;
     isResult_ = false;
@@ -125,7 +136,7 @@ void GameScene::Finalize()
     pStageManager_.reset();
     pSkybox_.reset();
 
-    gameEye_.reset();
+    pGameEye_.reset();
     pLayer_->RemoveCanvas(pCanvasBack_.get());
     pLayer_->RemoveCanvas(pCanvasSprite_.get());
 	pLayer_->RemoveCanvas(pCanvasUI_.get());
@@ -141,6 +152,8 @@ void GameScene::Update()
     {
         return;
     }
+
+    pGameEye_->Update();
 
     // Escキーによるポーズメニューの開閉トグル (リザルト中・タイムアップ中以外)
     if (pInput_ && !isResult_ && !isTimeUp_)
@@ -348,6 +361,8 @@ void GameScene::Update()
             }
         }
     }
+
+    pParticleEmitter_->Update();
 }
 
 void GameScene::Draw()
@@ -359,6 +374,9 @@ void GameScene::Draw()
     {
         pStageManager_->Draw();
     }
+
+    CanvasScope canvasScopeParticle(pCanvasParticle_.get());
+    pParticle_->Draw1F();
 
     CanvasScope canvasScopeUI(pCanvasUI_.get());
 
@@ -390,17 +408,15 @@ void GameScene::Draw()
 void GameScene::InitializeGameEye()
 {
     /// ゲームアイの初期化
-    gameEye_ = std::make_unique<GameEye>();
-    gameEye_->SetName("gameEye");
-    gameEye_->SetTranslate(Vector3(0, 15.0f, -30.0f));
-    gameEye_->SetRotate(Vector3(-1.2f, 0, 0));
-    gameEye_->SetFov(1.2f);
+    pGameEye_ = std::make_unique<GameEye2d>();
+    pGameEye_->SetName("2d");
 
     /// ゲームアイをセット
-    Object3dSystem::GetInstance()->SetGlobalEye(gameEye_.get());
-    SpriteSystem::GetInstance()->SetGlobalEye(gameEye_.get());
-    LineSystem::GetInstance()->SetGlobalEye(gameEye_.get());
-    pCubemapSystem_->SetGlobalEye(gameEye_.get());
+    Object3dSystem::GetInstance()->SetGlobalEye(pGameEye_.get());
+    SpriteSystem::GetInstance()->SetGlobalEye(pGameEye_.get());
+    ParticleSystem::GetInstance()->SetGlobalEye(pGameEye_.get());
+    LineSystem::GetInstance()->SetGlobalEye(pGameEye_.get());
+    pCubemapSystem_->SetGlobalEye(pGameEye_.get());
 }
 
 void GameScene::InitializeSkybox()
@@ -413,4 +429,17 @@ void GameScene::InitializeSkybox()
     pSkybox_->SetSkyboxTexture(pTM->GetSrvHandleGPU(Path::Image::kTitleSkybox));
 
     pCanvasBack_->RegisterDrawable(pSkybox_.get());
+}
+
+void GameScene::InitializeParticleEmitter()
+{
+    IModel* pModel = pModelManager_->Load(Path::Model::kParticlePlane);
+    pParticle_ = ParticleStorage::GetInstance()->CreateParticle();
+    pParticle_->Initialize(pModel);
+
+    ParticleEmitter::Params params = {};
+    params.particle = pParticle_;
+
+    pParticleEmitter_ = std::make_unique<ParticleEmitter>();
+    pParticleEmitter_->Initialize(params);
 }

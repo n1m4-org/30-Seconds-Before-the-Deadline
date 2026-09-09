@@ -1,0 +1,156 @@
+{
+    "attractorData": {
+        "dampingCoef": 0.25999999046325684,
+        "maxSpeed": 0.0,
+        "mode": 0,
+        "responsiveness": 0.0,
+        "slowRadius": 0.0,
+        "stiffness": 0.4099999964237213,
+        "target": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        }
+    },
+    "collisionFloor": {
+        "bouncePower": 0.0,
+        "elevation": 0.0
+    },
+    "common": {
+        "alphaDeltaValue": 0.0,
+        "emitInterval": 1.0,
+        "emitNum": 10,
+        "emitPositionFixed": {
+            "x": -132.0,
+            "y": -63.70000076293945,
+            "z": 0.0
+        },
+        "emitterLifeTime": 0.0,
+        "hueRotateSpeed": 0.0,
+        "particleLifeTime": 1.0,
+        "radius": 0.0,
+        "scaleDelayTime": 0.0,
+        "scaleFixed": {
+            "x": 16.0,
+            "y": 16.0,
+            "z": 0.0
+        },
+        "velocityFixed": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        }
+    },
+    "flags": {
+        "enableAttractor": false,
+        "enableCollisionFloor": false,
+        "enableRandomEmit": false,
+        "enableRandomRotation": true,
+        "enableRandomScale": false,
+        "enableRandomVelocity": true,
+        "enableScaleTransition": true,
+        "enableSmoothNoise": false,
+        "hueMode": 0,
+        "hueModeTarget": 2,
+        "velocityDistribution": 1
+    },
+    "name": "empty",
+    "physics": {
+        "frictionCoef": 0.0,
+        "gravity": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "resistance": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "smoothNoisePower": 1.149999976158142
+    },
+    "ranges": {
+        "color": {
+            "end": {
+                "w": 1.0,
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            },
+            "start": {
+                "w": 1.0,
+                "x": 1.0,
+                "y": 1.0,
+                "z": 1.0
+            }
+        },
+        "position": {
+            "end": {
+                "x": -32.0,
+                "y": -32.0,
+                "z": 0.0
+            },
+            "start": {
+                "x": 32.0,
+                "y": 32.0,
+                "z": 0.0
+            }
+        },
+        "rotationRandom": {
+            "end": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.7799999713897705
+            },
+            "start": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            }
+        },
+        "scale": {
+            "end": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "start": {
+                "x": 32.0,
+                "y": 32.0,
+                "z": 0.0
+            }
+        },
+        "scaleRandom": {
+            "end": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "start": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            }
+        },
+        "velocityRandom": {
+            "end": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "start": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            }
+        },
+        "velocityRandomSphere": {
+            "end": 150.0,
+            "start": 150.0
+        }
+    },
+    "textureData": {
+        "texturePath": "D:\\VSProject\\Jam\\Game\\app\\EngineResources\\Textures\\white1x1.png"
+    },
+    "version": 3
+}
