@@ -35,6 +35,14 @@ namespace Path::Image
     inline constexpr const char* kClearText = "common/font/clear.dds";
     inline constexpr const char* kFinishText = "common/font/finish.png";
 
+    namespace Title
+    {
+        inline constexpr const char* kMenuItemStart = "title/finish.png";
+        inline constexpr const char* kMenuItemExit = "title/finish.png";
+    }
+
+    inline constexpr const char* kTitleSkybox = "title/skybox.v2.dds";
+
     /// [ クリア ]
     namespace Clear
     {
@@ -67,13 +75,6 @@ namespace Path::Image
 
     /// [ パーティクル ]
     inline constexpr const char* kParticleCircle = "particle/circle_256x256_white.dds";
-
-    /// [ タイトルシーン ]
-    inline constexpr const char* kTitle = "title/title.dds";
-    inline constexpr const char* kTitleSkybox = "title/skybox.v2.dds";
-    inline constexpr const char* kTitleStartPromptSpaceKey = "title/press_space.dds";
-    inline constexpr const char* kTitleStartPromptButtonA = "title/press_a_button.dds";
-    inline constexpr const char* kFrameScreen = "title/frame_screen.dds";
 
     /// [ ローディング画面 ]
     inline constexpr const char* kLoading = "load/NOWLOADING.dds";

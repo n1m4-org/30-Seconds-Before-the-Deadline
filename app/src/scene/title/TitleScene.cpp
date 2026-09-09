@@ -37,37 +37,15 @@ void TitleScene::Initialize()
     // スプライトの初期化
     this->InitializeSprites();
 
-    /// フィルタの初期化と登録
-    {
-        auto tempBloom = pCanvasBack_->GetPostEffectExecutor().AddEffect(PostEffectClassName::GaussianBloom);
-        auto tempGaussian = pCanvasBack_->GetPostEffectExecutor().AddEffect(PostEffectClassName::SeparatedGaussianFilter);
-        auto tempMosaic = pCanvasBack_->GetPostEffectExecutor().AddEffect(PostEffectClassName::Mosaic);
-        auto tempRadial = pCanvasBack_->GetPostEffectExecutor().AddEffect(PostEffectClassName::RadialBlur);
-        tempRadial->Enable(true);
-        pGaussianBloom_ = static_cast<GaussianBloom*>(tempBloom);
-        pMosaic_ = static_cast<Mosaic*>(tempMosaic);
-        pSeparatedGaussianFilter_ = static_cast<SeparatedGaussianFilter*>(tempGaussian);
-    }
-
-    this->InitializePostEffects();
-
-    pSoundStartButton_ = AudioManager::GetInstance()->GetNewAudio("Effect", Path::Audio::kSeStartButton);
-    pSoundStartButton_->SetVolume(0.1f);
-
-    pSoundBGM_ = AudioManager::GetInstance()->GetNewAudio("BGM", Path::Audio::kBgmTitle);
-    pSoundBGM_->SetVolume(0.075f);
-    pSoundBGM_->Play(true);
+    // パーティクルエミッタの初期化
+    this->InitializeParticleEmitter();
 
     pPlayerPopupAnimation_ = std::make_unique<PlayerPopupAnimation>();
     pPlayerPopupAnimation_->Initialize();
-
-    // パーティクルエミッタの初期化
-    this->InitializeParticleEmitter();
 }
 
 void TitleScene::Finalize()
 {
-    pSoundBGM_->Stop();
     gameEye_.reset();
     pLayer_->RemoveCanvas(pCanvasBack_.get());
     pLayer_->RemoveCanvas(pCanvasSprite_.get());
@@ -89,23 +67,9 @@ void TitleScene::Update()
 
     gameEye_->Update();
 
-    float threshold = std::lerp(kBloomThresholdMin_, 0.5f, Math::Easing::EaseInOutSine(t));
-    pGaussianBloom_->SetThreshold(threshold);
-
-    t = (std::sinf(eyeRotate.y * 20.0f) + 1.0f) / 2.0f; // 0から1の範囲で変化する値
-    float kernelSize = std::lerp(3.0f, 31.0f, Math::Easing::EaseInOutQuad(t));
-    pSeparatedGaussianFilter_->GetOption().kernelSize = static_cast<int>(kernelSize);
-    pSeparatedGaussianFilter_->CreateKernel();
-
-    
     if (pInputMapperUI_->IsRelease(InputActionUI::Confirm) && !isChangingScene_)
     {
         this->ChangeToGameScene();
-    }
-
-    if (isChangingScene_)
-    {
-        pSoundBGM_->SetVolume(pSoundBGM_->GetVolume() * 0.95f);
     }
 
     pParticleEmitter_->Update();
@@ -138,30 +102,12 @@ void TitleScene::InitializeGameEye()
 
 void TitleScene::InitializeSprites()
 {
-    TextureManager* tm = TextureManager::GetInstance();
-    tm->LoadTexture(Path::Image::kTitleStartPromptSpaceKey);
-    tm->LoadTexture(Path::Image::kTitleStartPromptButtonA);
 }
 
 void TitleScene::InitializeSkybox()
 {
     auto pTM = TextureManager::GetInstance();
     pTM->LoadTexture(Path::Image::kTitleSkybox);
-}
-
-void TitleScene::InitializePostEffects()
-{
-    pGaussianBloom_->Enable(true);
-    pSeparatedGaussianFilter_->Enable(true);
-    pMosaic_->Enable(true);
-
-    pGaussianBloom_->SetKernelSize(31);
-    pGaussianBloom_->SetSigma(27.9f);
-    pGaussianBloom_->SetThreshold(0.313f);
-    pGaussianBloom_->SetBloomIntensity(2.14f);
-
-    pSeparatedGaussianFilter_->SetSigma(27.0f);
-    pMosaic_->GetOption().power = 200.0f;
 }
 
 void TitleScene::InitializeParticleEmitter()
@@ -207,7 +153,6 @@ void TitleScene::InitializeCanvas()
 
 void TitleScene::ChangeToGameScene()
 {
-    pSoundStartButton_->Play();
     pTransShutter_ = std::make_unique<TransShutter>();
     pSceneManager_->ReserveScene("GameScene", std::move(pTransShutter_));
     isChangingScene_ = true;

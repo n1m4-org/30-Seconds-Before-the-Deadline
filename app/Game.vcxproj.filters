@@ -33,6 +33,7 @@
     <ClCompile Include="src\object\alumiWall\AlumiWall.cpp" />
     <ClCompile Include="src\object\pc\PC.cpp" />
     <ClCompile Include="src\scene\title\animation\PlayerPopupAnimation.cpp" />
+    <ClCompile Include="src\scene\title\ui\TitleMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -121,5 +122,7 @@
     <ClInclude Include="src\object\pc\PC.h" />
     <ClInclude Include="src\object\ObjectRule.h" />
     <ClInclude Include="src\scene\title\animation\PlayerPopupAnimation.h" />
+    <ClInclude Include="src\scene\title\animation\TitleAnimation.h" />
+    <ClInclude Include="src\scene\title\ui\TitleMenu.h" />
   </ItemGroup>
 </Project>

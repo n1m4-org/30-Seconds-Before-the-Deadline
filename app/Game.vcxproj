@@ -43,6 +43,7 @@
     <ClCompile Include="src\scene\factory\SceneFactory.cpp" />
     <ClCompile Include="src\scene\title\animation\PlayerPopupAnimation.cpp" />
     <ClCompile Include="src\scene\title\TitleScene.cpp" />
+    <ClCompile Include="src\scene\title\ui\TitleMenu.cpp" />
     <ClCompile Include="src\screen\factory\IntermediateScreenFactory.cpp" />
     <ClCompile Include="src\screen\loading\LoadingScreen.cpp" />
     <ClCompile Include="src\wrapper\InputAwareSprite.cpp" />
@@ -65,7 +66,9 @@
     <ClInclude Include="src\presentation\animation\RadialBeat.h" />
     <ClInclude Include="src\scene\factory\SceneFactory.h" />
     <ClInclude Include="src\scene\title\animation\PlayerPopupAnimation.h" />
+    <ClInclude Include="src\scene\title\animation\TitleAnimation.h" />
     <ClInclude Include="src\scene\title\TitleScene.h" />
+    <ClInclude Include="src\scene\title\ui\TitleMenu.h" />
     <ClInclude Include="src\screen\factory\IntermediateScreenFactory.h" />
     <ClInclude Include="src\screen\loading\LoadingScreen.h" />
     <ClInclude Include="src\wrapper\InputAwareSprite.h" />

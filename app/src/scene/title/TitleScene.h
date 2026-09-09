@@ -62,7 +62,6 @@ private:
     void InitializeGameEye();
     void InitializeSprites();
     void InitializeSkybox();
-    void InitializePostEffects();
     void InitializeParticleEmitter();
     void InitializeCanvas();
 
@@ -84,12 +83,6 @@ private:
     std::unique_ptr<GameEye2d>          gameEye_                    = {};           // !< ゲームアイ
     std::unique_ptr<PlayerPopupAnimation> pPlayerPopupAnimation_    = nullptr;      // !< プレイヤーポップアップアニメーション
 
-    float                               opacityStartPrompt_         = 0.0f;         // !< スタートプロンプトの不透明度
-    GaussianBloom*                      pGaussianBloom_             = nullptr;      // !< ガウスぼかし
-    SeparatedGaussianFilter*            pSeparatedGaussianFilter_   = nullptr;      // !< 分離ガウスフィルタ
-    Mosaic*                             pMosaic_                    = nullptr;      // !< モザイク
-    Audio*                              pSoundStartButton_          = nullptr;      // !< スタートボタン音声
-    Audio*                              pSoundBGM_                  = nullptr;      // !< BGM音声
     std::unique_ptr<ParticleEmitter>    pParticleEmitter_           = nullptr;      // !< パーティクルエミッター
     Particle*                           pParticle_                  = nullptr;      // !< パーティクル
 
