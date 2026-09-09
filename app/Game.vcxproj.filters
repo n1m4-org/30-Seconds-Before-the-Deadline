@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <ClCompile Include="src\object\rotatingFloor\RotatingFloor.cpp">
+      <Filter>src\object\rotatingFloor</Filter>
+    </ClCompile>
+    <ClCompile Include="src\presentation\ui\InGameUI.cpp">
+      <Filter>src\presentation\ui</Filter>
+    </ClCompile>
     <ClCompile Include="src\object\baseObject2d\BaseObject2d.cpp">
       <Filter>src\object\baseObject2d</Filter>
     </ClCompile>
@@ -65,8 +71,6 @@
     <ClCompile Include="src\wrapper\InputAwareSprite.cpp">
       <Filter>src\wrapper</Filter>
     </ClCompile>
-    <ClCompile Include="src\presentation\ui\InGameUI.cpp" />
-    <ClCompile Include="src\object\rotatingFloor\RotatingFloor.cpp" />
     <ClCompile Include="src\scene\select\SelectScene.cpp">
       <Filter>src\scene\select</Filter>
     </ClCompile>
@@ -92,9 +96,6 @@
     </Filter>
     <Filter Include="src\scene">
       <UniqueIdentifier>{97236c83-21d3-47b9-be08-8d2191766d43}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="src\scene\select">
-      <UniqueIdentifier>{a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d}</UniqueIdentifier>
     </Filter>
     <Filter Include="src\screen">
       <UniqueIdentifier>{8876c19e-fd40-4c31-b9a3-6830767f4196}</UniqueIdentifier>
@@ -132,6 +133,9 @@
     <Filter Include="src\object\repeater">
       <UniqueIdentifier>{8f38376e-a610-47f0-84f4-b58f3a5ade22}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\object\rotatingFloor">
+      <UniqueIdentifier>{32396556-e429-4c55-8897-cbd7bf31a6b0}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\object\router">
       <UniqueIdentifier>{e3db8960-6202-4bbd-b2d2-313ce6916fbb}</UniqueIdentifier>
     </Filter>
@@ -147,6 +151,9 @@
     <Filter Include="src\scene\game">
       <UniqueIdentifier>{afe64f23-7a08-4485-8159-a123057ccc63}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\scene\select">
+      <UniqueIdentifier>{a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d}</UniqueIdentifier>
+    </Filter>
     <Filter Include="src\scene\title">
       <UniqueIdentifier>{b05ac6a7-91b6-4b92-9a9c-668b21ab971f}</UniqueIdentifier>
     </Filter>
@@ -161,6 +168,15 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\scene\select\SelectScene.h">
+      <Filter>src\scene\select</Filter>
+    </ClInclude>
+    <ClInclude Include="src\object\rotatingFloor\RotatingFloor.h">
+      <Filter>src\object\rotatingFloor</Filter>
+    </ClInclude>
+    <ClInclude Include="src\presentation\ui\InGameUI.h">
+      <Filter>src\presentation\ui</Filter>
+    </ClInclude>
     <ClInclude Include="src\presentation\ui\PauseMenu.h">
       <Filter>src\presentation\ui</Filter>
     </ClInclude>
@@ -235,11 +251,6 @@
     </ClInclude>
     <ClInclude Include="src\wrapper\InputAwareSprite.h">
       <Filter>src\wrapper</Filter>
-    </ClInclude>
-    <ClInclude Include="src\presentation\ui\InGameUI.h" />
-    <ClInclude Include="src\object\rotatingFloor\RotatingFloor.h" />
-    <ClInclude Include="src\scene\select\SelectScene.h">
-      <Filter>src\scene\select</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
