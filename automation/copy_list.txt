@@ -5,12 +5,19 @@
 #     絶対パス、またはこのスクリプト(automation/)からの相対パスで指定します。
 #   - 以降の行 = ルートからの相対パス(ファイル or ディレクトリ)。ワイルドカード可。
 #   - コピー先には末端の名前のみで配置されます(中間階層は落とされます)。
+#
+# 前提: 事前に Release|x64 をビルド済みであること
+#       (app/Bin/Release に Game.exe / dxcompiler.dll / dxil.dll が生成されている)
+# 使い方: pwsh automation/Copy-FileList.ps1 <出力先フォルダ>
 
 # --- リポジトリルート ---
 ..\app
 
-# --- コピー対象(例。必要に応じて編集してください) ---
-.\Assets
-.\bin\Release\*.exe
-.\bin\Release\*.dll
-..\module\Hagine\Engine\EngineAssets
+# --- 実行ファイル & 実行時DLL (Releaseビルド成果物) ---
+.\Bin\Release\Game.exe
+.\Bin\Release\dxcompiler.dll
+.\Bin\Release\dxil.dll
+
+# --- リソース (exeと同じ階層に配置される必要がある) ---
+.\resources
+.\EngineResources
