@@ -8,6 +8,7 @@
 #include <Features/Layer/Canvas.h>
 #include <drawable/sprite/Sprite.h>
 #include <Features/GameEye2d/GameEye2d.h>
+#include <Features/Audio/Audio.h>
 #include <memory>
 #include <vector>
 #include <string>
@@ -83,4 +84,6 @@ private:
     float                       currentScrollY_ = 0.0f;
     float                       targetScrollY_  = 0.0f;
     bool                        isChangingScene_= false;
+
+    Audio* pBgmAudio_ = nullptr; // !< BGMオーディオ
 };

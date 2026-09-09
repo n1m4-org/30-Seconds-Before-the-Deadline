@@ -11,6 +11,7 @@
 #include <Features/Cubemap/CubemapSystem.h>
 #include <Features/Layer/Canvas.h>
 #include <Features/Input/InputMapper.hpp>
+#include <Features/Audio/Audio.h>
 #include <logic/input/InputAction.h>
 #include <stage/StageManager.h>
 #include <presentation/ui/PauseMenu.h>
@@ -67,6 +68,8 @@ private:
     bool                          isResult_ = false;         // !< リザルト中フラグ
     bool                          isTimeUp_ = false;         // !< タイムアップ中フラグ
     bool                          isChangingScene_ = false;  // !< シーン遷移中フラグ
+
+    Audio* pBgmAudio_ = nullptr; // !< BGMオーディオ
 
     /// 他クラスのインスタンス参照
     PostEffectExecutor* pPostEffectExecutor_ = nullptr;

@@ -5,6 +5,7 @@
 #include <Core/DirectX12/TextureManager.h>
 #include <config/ResourcePath.h>
 #include <Features/Layer/CanvasScope.h>
+#include <Features/Audio/AudioManager.h>
 #include <Effects/SceneTransition/TransShutter.h>
 #include <NiGui.h>
 #include <dinput.h>
@@ -74,10 +75,15 @@ void GameScene::Initialize()
     isResult_ = false;
     isTimeUp_ = false;
     isChangingScene_ = false;
+
+    pBgmAudio_ = AudioManager::GetInstance()->GetNewAudio("BGM", Path::Audio::kBgmInGame);
+    pBgmAudio_->SetVolume(0.075f);
+    pBgmAudio_->Play(true);
 }
 
 void GameScene::Finalize()
 {
+    pBgmAudio_->Stop();
     pTimeUpMenu_.reset();
     pResultMenu_.reset();
     pPauseMenu_.reset();

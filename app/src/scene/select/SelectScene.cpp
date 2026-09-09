@@ -58,10 +58,15 @@ void SelectScene::Initialize()
 
     // 初期状態のスプライト座標と外観を更新
     UpdateCardVisuals();
+
+    pBgmAudio_ = AudioManager::GetInstance()->GetNewAudio("BGM", Path::Audio::kBgmTitle);
+    pBgmAudio_->SetVolume(0.075f);
+    pBgmAudio_->Play(true);
 }
 
 void SelectScene::Finalize()
 {
+    pBgmAudio_->Stop();
     pLayer_->RemoveCanvas(pCanvasUI_.get());
     if (pCanvasUI_) pCanvasUI_->Finalize();
 

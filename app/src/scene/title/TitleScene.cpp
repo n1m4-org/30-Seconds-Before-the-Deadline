@@ -42,10 +42,15 @@ void TitleScene::Initialize()
 
     pPlayerPopupAnimation_ = std::make_unique<PlayerPopupAnimation>();
     pPlayerPopupAnimation_->Initialize();
+
+	pBgmAudio_  = AudioManager::GetInstance()->GetNewAudio("BGM", Path::Audio::kBgmTitle);
+    pBgmAudio_->SetVolume(0.075f);
+    pBgmAudio_->Play(true);
 }
 
 void TitleScene::Finalize()
 {
+	pBgmAudio_->Stop();
     gameEye_.reset();
     pLayer_->RemoveCanvas(pCanvasBack_.get());
     pLayer_->RemoveCanvas(pCanvasSprite_.get());

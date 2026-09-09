@@ -86,6 +86,8 @@ private:
     std::unique_ptr<ParticleEmitter>    pParticleEmitter_           = nullptr;      // !< パーティクルエミッター
     Particle*                           pParticle_                  = nullptr;      // !< パーティクル
 
+	Audio* pBgmAudio_ = nullptr; // !< BGMオーディオ
+
     /// 他クラスのインスタンス
     PostEffectExecutor*         pPostEffectExecutor_    = nullptr;      // !< ポストエフェクト実行クラス
     DirectX12*                  pDx12_                  = nullptr;      // !< DirectX12

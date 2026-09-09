@@ -207,8 +207,8 @@ namespace Path::Image
 namespace Path::Audio
 {
     /// [ BGM ]
-    inline constexpr const char* kBgmTitle = "bgm_title.wav";
-    inline constexpr const char* kBgmInGame = "bgm_ingame.wav";
+    inline constexpr const char* kBgmTitle = "TitleBGM.wav";
+    inline constexpr const char* kBgmInGame = "InGameBGM.wav";
 
     /// [ SE ]
     inline constexpr const char* kSeStartButton = "se_title_startbutton.wav";
