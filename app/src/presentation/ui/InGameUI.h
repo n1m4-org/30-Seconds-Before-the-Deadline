@@ -36,6 +36,9 @@ private:
 		kTimelimitText,         // 4. 制限時間テキスト
 		kMoveExplanationText,   // 5. 移動説明テキスト
 		kClearText,             // 6. クリアテキスト
+		kTutoriaText,           // 7. チュートリアルテキスト
+		kUndoExplanationText,   // 8. アンドゥ説明テキスト
+		kResetExplanationText,  // 9. リセット説明テキスト
 		kSpriteCount
 	};
 	std::array<std::unique_ptr<Sprite>, kSpriteCount> pUISprites_; // !< UIスプライト

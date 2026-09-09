@@ -40,6 +40,17 @@ void ResultMenu::Initialize()
         pButtonSprites_[i]->Initialize(Path::Image::InGame::kTestTile);
         pButtonSprites_[i]->SetAnchorPoint({ 0.5f, 0.5f });
     }
+    pTextSprites_[0] = std::make_unique<Sprite>();
+    pTextSprites_[0]->Initialize(Path::Image::InGame::kNextStageText);
+    pTextSprites_[0]->SetAnchorPoint({ 0.5f, 0.5f });
+
+    pTextSprites_[1] = std::make_unique<Sprite>();
+    pTextSprites_[1]->Initialize(Path::Image::InGame::kLetsGoSelectText);
+    pTextSprites_[1]->SetAnchorPoint({ 0.5f, 0.5f });
+
+    pTextSprites_[2] = std::make_unique<Sprite>();
+    pTextSprites_[2]->Initialize(Path::Image::InGame::kLetsGoTitleText);
+    pTextSprites_[2]->SetAnchorPoint({ 0.5f, 0.5f });
 
     // 4. カーソルインジケーター
     pCursorSprite_ = std::make_unique<Sprite>();
@@ -124,13 +135,13 @@ void ResultMenu::Update(Input* pInput)
         }
 
         // 2. マウスホバー & クリック判定
-        float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
+        /*float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
         float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 720);
         Vector2 center = { screenW * 0.5f, screenH * 0.5f };
 
-        const float baseBtnW = 380.0f;
-        const float baseBtnH = 64.0f;
-        const float btnSpacing = 82.0f;
+        const float baseBtnW = 341.3f + 40.0f;
+        const float baseBtnH = 85.3f;
+        const float btnSpacing = 128.0f;
         const float startY = center.y - btnSpacing;
 
         POINT cursorPt = pInput->GetCursorPosition();
@@ -157,7 +168,7 @@ void ResultMenu::Update(Input* pInput)
                     return;
                 }
             }
-        }
+        }*/
 
         // 3. キーボード決定 (Space, Enter, テンキーEnter, Z キー)
         if (pInput->TriggerKey(DIK_SPACE) || 
@@ -187,8 +198,8 @@ void ResultMenu::UpdateLayout()
     }
 
     // 2. パネル背景
-    const float panelW = 460.0f;
-    const float panelH = 370.0f;
+    const float panelW = 500.0f;
+    const float panelH = 500.0f;
     if (pPanelSprite_)
     {
         pPanelSprite_->SetPosition(center);
@@ -197,9 +208,9 @@ void ResultMenu::UpdateLayout()
     }
 
     // 3. ボタン配置
-    const float baseBtnW = 380.0f;
-    const float baseBtnH = 64.0f;
-    const float btnSpacing = 82.0f;
+    const float baseBtnW = 341.3f;
+    const float baseBtnH = 85.3f;
+    const float btnSpacing = 128.0f;
     const float startY = center.y - btnSpacing; // 3項目の中心合わせ (-82, 0, +82)
 
     // カラーパレット定義 (非選択 / 選択中ハイライト)
@@ -221,18 +232,20 @@ void ResultMenu::UpdateLayout()
         {
             Vector2 btnPos = { center.x, startY + static_cast<float>(i) * btnSpacing };
             pButtonSprites_[i]->SetPosition(btnPos);
+			pTextSprites_[i]->SetPosition(btnPos);
 
             if (i == selectedIndex_)
             {
                 // 選択中のボタン: 脈動ハイライト & 拡大
                 float pulse = 1.0f + 0.03f * std::sin(animTimer_ * 4.0f);
-                pButtonSprites_[i]->SetSize({ baseBtnW * pulse, baseBtnH * pulse });
+                pButtonSprites_[i]->SetSize({ (baseBtnW + 40.0f) * pulse, baseBtnH * pulse });
+				pTextSprites_[i]->SetSize({ baseBtnW * pulse, baseBtnH * pulse });
                 pButtonSprites_[i]->SetColor(kHighlightColors[i]);
 
                 // カーソルバーを左脇に配置
                 if (pCursorSprite_)
                 {
-                    Vector2 cursorOffset = { -(baseBtnW * 0.5f * pulse + 14.0f), 0.0f };
+                    Vector2 cursorOffset = { -((baseBtnW + 40.0f) * 0.5f * pulse + 14.0f), 0.0f };
                     pCursorSprite_->SetPosition({ btnPos.x + cursorOffset.x, btnPos.y });
                     pCursorSprite_->SetSize({ 10.0f, baseBtnH * 0.75f * pulse });
                     pCursorSprite_->Update();
@@ -240,11 +253,13 @@ void ResultMenu::UpdateLayout()
             }
             else
             {
-                pButtonSprites_[i]->SetSize({ baseBtnW, baseBtnH });
+                pButtonSprites_[i]->SetSize({ (baseBtnW + 40.0f), baseBtnH });
+				pTextSprites_[i]->SetSize({ baseBtnW, baseBtnH });
                 pButtonSprites_[i]->SetColor(kNormalColors[i]);
             }
 
             pButtonSprites_[i]->Update();
+			pTextSprites_[i]->Update();
         }
     }
 }
@@ -275,6 +290,10 @@ void ResultMenu::Draw()
         {
             pButtonSprites_[i]->Draw1F();
         }
+		if (pTextSprites_[i])
+		{
+			pTextSprites_[i]->Draw1F();
+		}
     }
 
     // 4. カーソルインジケーター
@@ -289,7 +308,7 @@ void ResultMenu::Draw()
 		float screenW = static_cast<float>(Window::clientWidth > 0 ? Window::clientWidth : 1280);
 		float screenH = static_cast<float>(Window::clientHeight > 0 ? Window::clientHeight : 720);
 		Vector2 center = { screenW * 0.5f, screenH * 0.5f };
-		Vector2 clearPos = { center.x, center.y - 300.0f };
+		Vector2 clearPos = { center.x, center.y - 350.0f };
 		pClearSprite_->SetPosition(clearPos);
 		pClearSprite_->Update();
 		pClearSprite_->Draw1F();

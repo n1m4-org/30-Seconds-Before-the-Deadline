@@ -60,13 +60,31 @@ void InGameUI::Initialize()
 	pUISprites_[kMoveExplanationText] = std::make_unique<Sprite>();
 	pUISprites_[kMoveExplanationText]->Initialize(Path::Image::InGame::kMoveExplanationText);
 	pUISprites_[kMoveExplanationText]->SetAnchorPoint({ 0.0f, 0.5f }); // 左端を基準にする
-	pUISprites_[kMoveExplanationText]->SetPosition({ 50.0f, 500.0f }); // 移動説明テキストの位置を設定
+	pUISprites_[kMoveExplanationText]->SetPosition({ 50.0f, 600.0f }); // 移動説明テキストの位置を設定
 
 	pUISprites_[kClearText] = std::make_unique<Sprite>();
 	pUISprites_[kClearText]->Initialize(Path::Image::InGame::kClearText);
 	pUISprites_[kClearText]->SetAnchorPoint({ 0.0f, 0.5f }); // 左端を基準にする
 	pUISprites_[kClearText]->SetPosition({ 1300.0f, 400.0f }); // クリアテキストの位置を設定
 	pUISprites_[kClearText]->SetSize(pUISprites_[kClearText]->GetSize() / 2.0f); // 初期サイズを設定
+
+	pUISprites_[kTutoriaText] = std::make_unique<Sprite>();
+	pUISprites_[kTutoriaText]->Initialize(Path::Image::InGame::kTutoriaText);
+	pUISprites_[kTutoriaText]->SetAnchorPoint({ 0.0f, 0.5f }); // 左端を基準にする
+	pUISprites_[kTutoriaText]->SetPosition({ 8.0f, 100.0f }); // チュートリアルテキストの位置を設定
+	pUISprites_[kTutoriaText]->SetSize(pUISprites_[kTutoriaText]->GetSize() / 1.5f); // 初期サイズを設定
+
+	pUISprites_[kUndoExplanationText] = std::make_unique<Sprite>();
+	pUISprites_[kUndoExplanationText]->Initialize(Path::Image::InGame::kUndoExplanationText);
+	pUISprites_[kUndoExplanationText]->SetAnchorPoint({ 0.0f, 0.5f }); // 左端を基準にする
+	pUISprites_[kUndoExplanationText]->SetPosition({ 20.0f, 390.0f }); // アンドゥ説明テキストの位置を設定
+	pUISprites_[kUndoExplanationText]->SetSize(pUISprites_[kUndoExplanationText]->GetSize() / 1.5f); // 初期サイズを設定
+
+	pUISprites_[kResetExplanationText] = std::make_unique<Sprite>();
+	pUISprites_[kResetExplanationText]->Initialize(Path::Image::InGame::kResetExplanationText);
+	pUISprites_[kResetExplanationText]->SetAnchorPoint({ 0.0f, 0.5f }); // 左端を基準にする
+	pUISprites_[kResetExplanationText]->SetPosition({ 178.0f, 390.0f }); // リセット説明テキストの位置を設定
+	pUISprites_[kResetExplanationText]->SetSize(pUISprites_[kResetExplanationText]->GetSize() / 1.5f); // 初期サイズを設定
 }
 
 void InGameUI::Update(float progress, float remainingTime)

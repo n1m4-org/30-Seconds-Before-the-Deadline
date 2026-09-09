@@ -115,6 +115,18 @@ namespace Path::Image
         inline constexpr const char* kMoveExplanationText = "game/ui/move_Explanation_UI.png";
         inline constexpr const char* kClearText = "game/ui/clear_text_UI.png";
 
+        inline constexpr const char* kResetExplanationText = "game/ui/reset_Explanation_UI.png";
+        inline constexpr const char* kUndoExplanationText = "game/ui/undo_Explanation_UI.png";
+        inline constexpr const char* kDefeatText = "game/ui/defeat_text_UI.png";
+        inline constexpr const char* kLetsGoSelectText = "game/ui/letsGoSelect_text.png";
+        inline constexpr const char* kLetsGoTitleText = "game/ui/letsGoTitle_text.png";
+        inline constexpr const char* kNextStageText = "game/ui/nextStage_text.png";
+        inline constexpr const char* kRetryText = "game/ui/retry_text.png";
+        inline constexpr const char* kReturnGameText = "game/ui/returnGame_text.png";
+        inline constexpr const char* kTutoriaText = "game/ui/tutoria_text.png";
+        inline constexpr const char* kGauge = "game/ui/gauge.png";
+
+
         // マップタイル
         inline constexpr const char* kTestTile = "game/tile/Simple.png";
         inline constexpr const char* kTile = "game/tile/floor.png";

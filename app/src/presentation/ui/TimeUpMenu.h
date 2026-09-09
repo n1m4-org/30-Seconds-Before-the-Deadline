@@ -91,7 +91,9 @@ private:
     std::unique_ptr<Sprite> pOverlaySprite_ = nullptr; // !< 画面全体の半透明暗幕
     std::unique_ptr<Sprite> pPanelSprite_ = nullptr;   // !< メニュー中央のパネル背景
     std::array<std::unique_ptr<Sprite>, kItemCount> pButtonSprites_{}; // !< 各ボタン
+    std::array<std::unique_ptr<Sprite>, kItemCount> pTextSprites_{}; // !< 各ボタン
     std::unique_ptr<Sprite> pCursorSprite_ = nullptr;  // !< 選択中ボタンのカーソルバー
+    std::unique_ptr<Sprite> pTimeUpSprite_ = nullptr;   // !< クリアテキスト
 
     float animTimer_ = 0.0f; // !< 選択中ボタンのパルス・アニメーションタイマー
 };
