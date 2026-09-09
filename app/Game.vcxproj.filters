@@ -44,8 +44,14 @@
     <ClCompile Include="src\scene\factory\SceneFactory.cpp">
       <Filter>src\scene\factory</Filter>
     </ClCompile>
+    <ClCompile Include="src\scene\title\animation\PlayerPopupAnimation.cpp">
+      <Filter>src\scene\title\animation</Filter>
+    </ClCompile>
     <ClCompile Include="src\scene\title\TitleScene.cpp">
       <Filter>src\scene\title</Filter>
+    </ClCompile>
+    <ClCompile Include="src\scene\title\ui\TitleMenu.cpp">
+      <Filter>src\scene\title\ui</Filter>
     </ClCompile>
     <ClCompile Include="src\screen\factory\IntermediateScreenFactory.cpp">
       <Filter>src\screen\factory</Filter>
@@ -71,17 +77,6 @@
     <ClCompile Include="src\scene\select\SelectScene.cpp">
       <Filter>src\scene\select</Filter>
     </ClCompile>
-    <ClCompile Include="src\scene\game\GameScene.cpp" />
-    <ClCompile Include="src\logic\mapCollision\MapCollision.cpp" />
-    <ClCompile Include="src\logic\signal\SignalSystem.cpp" />
-    <ClCompile Include="src\object\baseObject2d\BaseObject2d.cpp" />
-    <ClCompile Include="src\object\player\Player.cpp" />
-    <ClCompile Include="src\object\router\Router.cpp" />
-    <ClCompile Include="src\object\repeater\Repeater.cpp" />
-    <ClCompile Include="src\object\alumiWall\AlumiWall.cpp" />
-    <ClCompile Include="src\object\pc\PC.cpp" />
-    <ClCompile Include="src\scene\title\animation\PlayerPopupAnimation.cpp" />
-    <ClCompile Include="src\scene\title\ui\TitleMenu.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -174,6 +169,9 @@
     <Filter Include="src\scene\title\animation">
       <UniqueIdentifier>{b1c9f920-5fd7-496c-bc52-9e5beddfd29e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\scene\title\ui">
+      <UniqueIdentifier>{b11ffb45-a594-4403-8c88-acd7634b9080}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\scene\select\SelectScene.h">
@@ -245,8 +243,17 @@
     <ClInclude Include="src\scene\factory\SceneFactory.h">
       <Filter>src\scene\factory</Filter>
     </ClInclude>
+    <ClInclude Include="src\scene\title\animation\PlayerPopupAnimation.h">
+      <Filter>src\scene\title\animation</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\title\animation\TitleAnimation.h">
+      <Filter>src\scene\title\animation</Filter>
+    </ClInclude>
     <ClInclude Include="src\scene\title\TitleScene.h">
       <Filter>src\scene\title</Filter>
+    </ClInclude>
+    <ClInclude Include="src\scene\title\ui\TitleMenu.h">
+      <Filter>src\scene\title\ui</Filter>
     </ClInclude>
     <ClInclude Include="src\screen\factory\IntermediateScreenFactory.h">
       <Filter>src\screen\factory</Filter>
@@ -257,19 +264,5 @@
     <ClInclude Include="src\wrapper\InputAwareSprite.h">
       <Filter>src\wrapper</Filter>
     </ClInclude>
-    <ClInclude Include="src\scene\game\GameScene.h" />
-    <ClInclude Include="src\logic\ConvertNumTex\ConvertNumTex.h" />
-    <ClInclude Include="src\logic\mapCollision\MapCollision.h" />
-    <ClInclude Include="src\logic\signal\SignalSystem.h" />
-    <ClInclude Include="src\object\baseObject2d\BaseObject2d.h" />
-    <ClInclude Include="src\object\player\Player.h" />
-    <ClInclude Include="src\object\router\Router.h" />
-    <ClInclude Include="src\object\repeater\Repeater.h" />
-    <ClInclude Include="src\object\alumiWall\AlumiWall.h" />
-    <ClInclude Include="src\object\pc\PC.h" />
-    <ClInclude Include="src\object\ObjectRule.h" />
-    <ClInclude Include="src\scene\title\animation\PlayerPopupAnimation.h" />
-    <ClInclude Include="src\scene\title\animation\TitleAnimation.h" />
-    <ClInclude Include="src\scene\title\ui\TitleMenu.h" />
   </ItemGroup>
 </Project>
