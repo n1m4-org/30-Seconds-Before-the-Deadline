@@ -71,7 +71,7 @@ void InGameUI::Initialize()
 	pUISprites_[kTutoriaText] = std::make_unique<Sprite>();
 	pUISprites_[kTutoriaText]->Initialize(Path::Image::InGame::kTutoriaText);
 	pUISprites_[kTutoriaText]->SetAnchorPoint({ 0.0f, 0.5f }); // 左端を基準にする
-	pUISprites_[kTutoriaText]->SetPosition({ 8.0f, 100.0f }); // チュートリアルテキストの位置を設定
+	pUISprites_[kTutoriaText]->SetPosition({ 8.0f, 200.0f }); // チュートリアルテキストの位置を設定
 	pUISprites_[kTutoriaText]->SetSize(pUISprites_[kTutoriaText]->GetSize() / 1.5f); // 初期サイズを設定
 
 	pUISprites_[kUndoExplanationText] = std::make_unique<Sprite>();
@@ -85,6 +85,12 @@ void InGameUI::Initialize()
 	pUISprites_[kResetExplanationText]->SetAnchorPoint({ 0.0f, 0.5f }); // 左端を基準にする
 	pUISprites_[kResetExplanationText]->SetPosition({ 178.0f, 390.0f }); // リセット説明テキストの位置を設定
 	pUISprites_[kResetExplanationText]->SetSize(pUISprites_[kResetExplanationText]->GetSize() / 1.5f); // 初期サイズを設定
+
+	pUISprites_[kPauseExplanationText] = std::make_unique<Sprite>();
+	pUISprites_[kPauseExplanationText]->Initialize(Path::Image::InGame::kPauseExplanationText);
+	pUISprites_[kPauseExplanationText]->SetAnchorPoint({ 0.0f, 0.5f }); // 左端を基準にする
+	pUISprites_[kPauseExplanationText]->SetPosition({ 8.0f, 60.0f }); // ポーズ説明テキストの位置を設定
+	pUISprites_[kPauseExplanationText]->SetSize(pUISprites_[kPauseExplanationText]->GetSize() / 1.5f); // 初期サイズを設定
 }
 
 void InGameUI::Update(float progress, float remainingTime)

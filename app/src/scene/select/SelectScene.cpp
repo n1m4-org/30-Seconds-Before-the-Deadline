@@ -181,7 +181,7 @@ void SelectScene::BuildStageCards()
     pSpriteScreenBg_->SetAnchorPoint({ 0.5f, 0.5f });
     pSpriteScreenBg_->SetPosition({ 800.0f, 450.0f });
     pSpriteScreenBg_->SetSize({ 1600.0f, 900.0f });
-    pSpriteScreenBg_->SetColor({ 0.08f, 0.10f, 0.14f, 1.0f }); // 高級感のあるダークネイビー
+    pSpriteScreenBg_->SetColor({ 0.08f, 0.10f, 0.14f, 1.0f });
 
     const float cardW = 180.0f;
     const float cardH = 96.0f;

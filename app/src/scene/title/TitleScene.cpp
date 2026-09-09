@@ -89,6 +89,7 @@ void TitleScene::Draw()
 
     CanvasScope canvasScopeUI(pCanvasSprite_.get());
     pPlayerPopupAnimation_->Draw1F();
+    pTitleTextSprite_->Draw1F();
 }
 
 void TitleScene::InitializeGameEye()
@@ -107,6 +108,12 @@ void TitleScene::InitializeGameEye()
 
 void TitleScene::InitializeSprites()
 {
+    // クリアテキスト
+    pTitleTextSprite_ = std::make_unique<Sprite>();
+    pTitleTextSprite_->Initialize(Path::Image::InGame::kTitleText);
+    pTitleTextSprite_->SetAnchorPoint({ 0.5f, 0.5f });
+	pTitleTextSprite_->SetPosition({ 800.0f, 200.0f });
+    pTitleTextSprite_->Update();
 }
 
 void TitleScene::InitializeSkybox()

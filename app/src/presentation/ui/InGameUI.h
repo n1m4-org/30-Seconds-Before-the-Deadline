@@ -39,6 +39,7 @@ private:
 		kTutoriaText,           // 7. チュートリアルテキスト
 		kUndoExplanationText,   // 8. アンドゥ説明テキスト
 		kResetExplanationText,  // 9. リセット説明テキスト
+		kPauseExplanationText,  // 10. ポーズ説明テキスト
 		kSpriteCount
 	};
 	std::array<std::unique_ptr<Sprite>, kSpriteCount> pUISprites_; // !< UIスプライト

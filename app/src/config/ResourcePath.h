@@ -125,6 +125,8 @@ namespace Path::Image
         inline constexpr const char* kReturnGameText = "game/ui/returnGame_text.png";
         inline constexpr const char* kTutoriaText = "game/ui/tutoria_text.png";
         inline constexpr const char* kGauge = "game/ui/gauge.png";
+		inline constexpr const char* kPauseExplanationText = "game/ui/pause_Explanation_text.png";
+		inline constexpr const char* kTitleText = "game/ui/title.png";
 
 
         // マップタイル

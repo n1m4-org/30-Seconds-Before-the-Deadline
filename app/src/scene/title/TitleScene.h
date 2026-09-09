@@ -87,6 +87,7 @@ private:
     Particle*                           pParticle_                  = nullptr;      // !< パーティクル
 
 	Audio* pBgmAudio_ = nullptr; // !< BGMオーディオ
+    std::unique_ptr<Sprite> pTitleTextSprite_ = nullptr;   // !< クリアテキスト
 
     /// 他クラスのインスタンス
     PostEffectExecutor*         pPostEffectExecutor_    = nullptr;      // !< ポストエフェクト実行クラス
