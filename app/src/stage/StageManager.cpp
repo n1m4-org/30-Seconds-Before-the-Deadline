@@ -106,14 +106,13 @@ void StageManager::Update(Input* pInput)
     if (IsPlayMode())
     {
         // キーボードによるステージリセット (R) と アンドゥ (Z / U)
-        if (pInput && !ImGui::GetIO().WantCaptureKeyboard && !IsTimeUp() && !IsCleared())
+        if (pInput && !IsTimeUp() && !IsCleared())
         {
-            if (pInput->TriggerKey(DIK_R) || pInput->TriggerKeyC('R') || pInput->TriggerKeyC('r'))
+            if (pInput->TriggerKey(DIK_R))
             {
                 ResetStage();
             }
-            else if (pInput->TriggerKey(DIK_Z) || pInput->TriggerKeyC('Z') || pInput->TriggerKeyC('z') ||
-                     pInput->TriggerKey(DIK_U) || pInput->TriggerKeyC('U') || pInput->TriggerKeyC('u'))
+            else if (pInput->TriggerKey(DIK_Z) || pInput->TriggerKey(DIK_U))
             {
                 Undo();
             }
