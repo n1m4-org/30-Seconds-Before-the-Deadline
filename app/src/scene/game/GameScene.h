@@ -29,6 +29,7 @@ class GameScene : public SceneBase
 {
 public:
     GameScene(ISceneArgs* _pArg) : SceneBase(_pArg) {};
+    ~GameScene() override;
 
     /// <summary>
     /// 初期化

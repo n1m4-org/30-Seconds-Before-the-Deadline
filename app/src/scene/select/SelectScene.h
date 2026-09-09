@@ -22,7 +22,7 @@ class SelectScene : public SceneBase
 {
 public:
     SelectScene(ISceneArgs* pArgs);
-    ~SelectScene() override = default;
+    ~SelectScene() override;
 
     void Initialize() override;
     void Finalize() override;

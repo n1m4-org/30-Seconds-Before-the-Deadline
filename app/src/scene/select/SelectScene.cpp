@@ -76,11 +76,27 @@ void SelectScene::Initialize()
     }
 }
 
+SelectScene::~SelectScene()
+{
+    Finalize();
+}
+
 void SelectScene::Finalize()
 {
-    pBgmAudio_->Stop();
-    pLayer_->RemoveCanvas(pCanvasUI_.get());
-    if (pCanvasUI_) pCanvasUI_->Finalize();
+    if (pBgmAudio_)
+    {
+        pBgmAudio_->Stop();
+        pBgmAudio_ = nullptr;
+    }
+    if (pLayer_ && pCanvasUI_)
+    {
+        pLayer_->RemoveCanvas(pCanvasUI_.get());
+    }
+    if (pCanvasUI_)
+    {
+        pCanvasUI_->Finalize();
+        pCanvasUI_.reset();
+    }
 
     pGameEye_.reset();
 }

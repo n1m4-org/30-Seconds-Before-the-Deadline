@@ -123,26 +123,43 @@ void GameScene::Initialize()
     }
 }
 
+GameScene::~GameScene()
+{
+    Finalize();
+}
+
 void GameScene::Finalize()
 {
     if (pStageManager_)
     {
         pStageManager_->StopUploadSE();
+        pStageManager_.reset();
     }
-    pBgmAudio_->Stop();
+    if (pBgmAudio_)
+    {
+        pBgmAudio_->Stop();
+        pBgmAudio_ = nullptr;
+    }
     pTimeUpMenu_.reset();
     pResultMenu_.reset();
     pPauseMenu_.reset();
-    pStageManager_.reset();
     pSkybox_.reset();
 
     pGameEye_.reset();
-    pLayer_->RemoveCanvas(pCanvasBack_.get());
-    pLayer_->RemoveCanvas(pCanvasSprite_.get());
-	pLayer_->RemoveCanvas(pCanvasUI_.get());
-    pCanvasBack_->Finalize();
-    pCanvasSprite_->Finalize();
-    pCanvasUI_->Finalize();
+
+    if (pLayer_)
+    {
+        if (pCanvasBack_) pLayer_->RemoveCanvas(pCanvasBack_.get());
+        if (pCanvasSprite_) pLayer_->RemoveCanvas(pCanvasSprite_.get());
+        if (pCanvasParticle_) pLayer_->RemoveCanvas(pCanvasParticle_.get());
+        if (pCanvasUI_) pLayer_->RemoveCanvas(pCanvasUI_.get());
+    }
+
+    if (pCanvasBack_) { pCanvasBack_->Finalize(); pCanvasBack_.reset(); }
+    if (pCanvasSprite_) { pCanvasSprite_->Finalize(); pCanvasSprite_.reset(); }
+    if (pCanvasParticle_) { pCanvasParticle_->Finalize(); pCanvasParticle_.reset(); }
+    if (pCanvasUI_) { pCanvasUI_->Finalize(); pCanvasUI_.reset(); }
+    if (pParticleEmitter_) { pParticleEmitter_->Finalize(); pParticleEmitter_.reset(); }
 }
 
 void GameScene::Update()
