@@ -10,4 +10,7 @@ public:
 	void Initialize() override;
 	void Update() override;
 	void Draw() override;
+
+	// アルミ壁は向きによる回転を行わない（常に正立）
+	void ApplyRotationToSprite() override { ResetRotation(); }
 };

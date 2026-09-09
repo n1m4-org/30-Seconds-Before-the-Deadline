@@ -1,5 +1,7 @@
 #include "BaseObject2d.h"
 #include <algorithm>
+#include <cmath>
+#include <Features/DeltaTimeManager/DeltaTimeManager.h>
 
 BaseObject2d::BaseObject2d()
 {
@@ -28,6 +30,7 @@ void BaseObject2d::Move(const Vector2Int& delta)
 
 void BaseObject2d::UpdateSpritePosition(float tileSize, const Vector2& mapOffset)
 {
+	size_ = { tileSize, tileSize };
 	Vector2 calcPos = {
 		tileSize / 2.0f + tileSize * position_.x + mapOffset.x,
 		tileSize / 2.0f + tileSize * position_.y + mapOffset.y
@@ -56,12 +59,29 @@ void BaseObject2d::UpdateSpritePosition(float tileSize, const Vector2& mapOffset
 
 void BaseObject2d::Update()
 {
+	if (!isActive_)
+	{
+		return;
+	}
+
 	if (isMoving_)
 	{
-		// 描画位置を目標値に近付ける（イージング / 線形補間）
-		float deltaProgress = 0.15f; // スムーズ移動の補間係数
-		currentRenderPos_.x += (targetRenderPos_.x - currentRenderPos_.x) * deltaProgress;
-		currentRenderPos_.y += (targetRenderPos_.y - currentRenderPos_.y) * deltaProgress;
+		float dt = 1.0f / 60.0f;
+		try
+		{
+			dt = DeltaTimeManager::GetInstance()->GetDeltaTime(static_cast<uint32_t>(DeltaTimeChannelReserved::Game));
+		}
+		catch (...)
+		{
+			dt = 1.0f / 60.0f;
+		}
+
+		// 60FPS時の補間係数 0.25f と同等となる DeltaTime 依存の指数減衰補間
+		float blend = 1.0f - std::pow(0.75f, dt * 60.0f);
+		blend = std::clamp(blend, 0.0f, 1.0f);
+
+		currentRenderPos_.x += (targetRenderPos_.x - currentRenderPos_.x) * blend;
+		currentRenderPos_.y += (targetRenderPos_.y - currentRenderPos_.y) * blend;
 
 		float distSq = (targetRenderPos_.x - currentRenderPos_.x) * (targetRenderPos_.x - currentRenderPos_.x) +
 		               (targetRenderPos_.y - currentRenderPos_.y) * (targetRenderPos_.y - currentRenderPos_.y);
@@ -86,6 +106,11 @@ void BaseObject2d::Update()
 
 void BaseObject2d::Draw()
 {
+	if (!isActive_)
+	{
+		return;
+	}
+
 	if (pSprite_)
 	{
 		pSprite_->Draw1F();

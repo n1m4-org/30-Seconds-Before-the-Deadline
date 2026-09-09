@@ -154,6 +154,6 @@ void TitleScene::InitializeCanvas()
 void TitleScene::ChangeToGameScene()
 {
     pTransShutter_ = std::make_unique<TransShutter>();
-    pSceneManager_->ReserveScene("GameScene", std::move(pTransShutter_));
+    pSceneManager_->ReserveScene("SelectScene", std::move(pTransShutter_));
     isChangingScene_ = true;
 }
